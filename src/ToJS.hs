@@ -16,7 +16,11 @@ toJS = \case
   -- Special forms
   SExpr.List [SExpr.Symbol "lambda", SExpr.List args, body]
     | Just args' <- traverse fromSymbol args 
-      -> JS.Function (map mangle args') (toJS body)
+      -> JS.Function Nothing (map mangle args') (toJS body)
+
+  SExpr.List [SExpr.Symbol "fix", SExpr.Symbol name, SExpr.List args, body]
+    | Just args' <- traverse fromSymbol args 
+      -> JS.Function (Just (mangle name)) (map mangle args') (toJS body)
 
   SExpr.List [SExpr.Symbol "if", cond, then_, else_] ->
     JS.If (toJS cond) (toJS then_) (toJS else_)

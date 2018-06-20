@@ -4,18 +4,19 @@
 module JS where
 
 import Data.Monoid
+import Data.Maybe
 import Data.Text (Text)
 import qualified Data.Text as T
 
 type Ident = Text
 
-data Expr = Function [Ident] Expr | Apply Expr [Expr] | Var Ident | String Text | Num Integer | ArrayLit [Expr] | If Expr Expr Expr
+data Expr = Function (Maybe Ident) [Ident] Expr | Apply Expr [Expr] | Var Ident | String Text | Num Integer | ArrayLit [Expr] | If Expr Expr Expr
   deriving (Eq, Show)
 
 renderExpr :: Expr -> Text
 renderExpr = \case
-  Function args body ->
-    "(function (" <> T.intercalate "," args <> ") { return " <> renderExpr body <> "; })"
+  Function ident args body ->
+    "(function " <> fromMaybe "" ident <> "(" <> T.intercalate "," args <> ") { return " <> renderExpr body <> "; })"
 
   Var ident ->
     ident
