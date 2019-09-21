@@ -57,6 +57,9 @@ spec = do
     it "weird symbol 2" $
       parseS "foo->bar1" `shouldParse` Symbol "foo->bar1"
 
+    it "emojis" $
+      parseS "💩\x1f397" `shouldParse` Symbol "💩\x1f397"
+
     it "string" $
       parseS "\"Hello\"" `shouldParse` String "Hello"
 

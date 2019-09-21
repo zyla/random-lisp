@@ -55,4 +55,6 @@ sSymbol :: Parser Text
 sSymbol = lexeme $ Text.pack <$> ((:) <$> satisfy isSymbolChar <*> many (satisfy isSymbolChar))
 
 isSymbolChar :: Char -> Bool
-isSymbolChar c = Text.any (==c) "~!@#$%^&*_+-=,./?:<>💩" || Char.isAlphaNum c
+isSymbolChar c = Text.any (==c) "~!@#$%^&*_+-=,./?:<>"
+  || Char.isAlphaNum c
+  || (c >= '\x1f000' && c <= '\x1ffff')
