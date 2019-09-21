@@ -47,9 +47,11 @@ infer ctx = \case
 
   App fn args -> do
     fnty <- infer ctx fn
+    argtysInferred <- traverse (infer ctx) args
     case fnty of
+      TyForall tys ty -> do
+        _
       TyFun argtys retty -> do
-        argtysInferred <- traverse (infer ctx) args
         when (argtys /= argtysInferred) $
           err $ "Argument type mismatch in application: " <> tshow argtys <> " vs " <> tshow argtysInferred
         pure retty

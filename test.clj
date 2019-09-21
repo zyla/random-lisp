@@ -1,4 +1,4 @@
-(declare dynamic/pure : (-> [Int] (Dynamic Int)))
+(declare dynamic/pure : (forall [a] (-> [a] (Dynamic a))))
 (declare + : (-> [Int Int] Int))
 
 (def x (dynamic/pure 1))

@@ -27,6 +27,7 @@ data Type
   = TyVar Ident
   | TyApp Type [Type]
   | TyFun [Type] Type
+  | TyForall [Ident] Type
   deriving (Eq, Show)
 
 parseType :: S.SExpr -> Parser Type
@@ -35,6 +36,8 @@ parseType = \case
     pure $ TyVar (Ident ident)
   S.List [S.Symbol "->", S.Vector args, ret] ->
     TyFun <$> traverse parseType args <*> parseType ret
+  S.List [S.Symbol "forall", S.Vector args, ret] ->
+    TyForall <$> traverse parseIdent args <*> parseType ret
   S.List (tc : args) ->
     TyApp <$> parseType tc <*> traverse parseType args
   s ->
