@@ -5,7 +5,9 @@ module ToJS where
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Char (isAlphaNum)
 import SExpr
+import Text.Printf
 import JS
 
 toJS :: SExpr -> JS.Expr
@@ -36,6 +38,7 @@ fromSymbol = \case
 mangle :: Ident -> Text
 mangle = T.concatMap $
   \case
+    c | isAlphaNum c -> T.singleton c
     '~' -> "$tilde"
     '!' -> "$bang"
     '@' -> "$at"
@@ -54,4 +57,4 @@ mangle = T.concatMap $
     ':' -> "$colon"
     '<' -> "$lt"
     '>' -> "$gt"
-    c   -> T.singleton c
+    c   -> T.pack $ printf "$u%x" (fromEnum c)
