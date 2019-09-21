@@ -14,7 +14,9 @@ import qualified SExpr as S
 newtype Ident = Ident { unIdent :: Text }
   deriving newtype (Eq, Show, Ord)
 
-data Declaration = Declaration { ident :: Ident, type_ :: Maybe Type, body :: Expr }
+data Declaration
+  = Def { ident :: Ident, type_ :: Maybe Type, body :: Expr }
+  | Declare { ident :: Ident, declareType :: Type }
   deriving (Eq, Show)
 
 type ParseError = Text
@@ -41,7 +43,7 @@ parseType = \case
 data Expr
   = Var Ident
   | App Expr [Expr]
-  | Fun [Ident] Expr
+  | Fun [(Ident, Type)] Expr
   | Lit Literal
   deriving (Eq, Show)
 
@@ -71,14 +73,21 @@ parseExpr = \case
     parseError $ "invalid expr: " <> tshow s
 
 parseParameterList = \case
-  S.Vector args -> traverse parseIdent args
+  S.Vector args -> traverse parseParam args
   _ -> parseError "parameterList"
+
+parseParam = \case
+  S.List [id, ty] -> do
+    ident <- parseIdent id
+    type_ <- parseType ty
+    pure (ident, type_)
+  _ -> parseError "param"
 
 parseDeclaration :: S.SExpr -> Parser Declaration
 parseDeclaration = \case
   S.List [S.Symbol "def", S.Symbol ident, body] -> do
     body' <- parseExpr body
-    pure Declaration
+    pure Def
       { ident = Ident ident
       , type_ = Nothing
       , body = body'
@@ -87,7 +96,7 @@ parseDeclaration = \case
   S.List [S.Symbol "defn", S.Symbol ident, args, body] -> do
     body <- parseExpr body
     args <- parseParameterList args
-    pure Declaration
+    pure Def
       { ident = Ident ident
       , type_ = Nothing
       , body = (Fun args body)
@@ -97,10 +106,17 @@ parseDeclaration = \case
     body <- parseExpr body
     type_ <- parseType type_
     args <- parseParameterList args
-    pure Declaration
+    pure Def
       { ident = Ident ident
       , type_ = Just type_
       , body = (Fun args body)
+      }
+
+  S.List [S.Symbol "declare", S.Symbol ident, S.Symbol ":", type_] -> do
+    type_ <- parseType type_
+    pure Declare
+      { ident = Ident ident
+      , declareType = type_
       }
 
   s ->

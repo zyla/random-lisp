@@ -20,7 +20,7 @@ type Parser = Parsec Void Text
 sc :: Parser ()
 sc = L.space space1 lineCmnt blockCmnt
   where
-    lineCmnt  = L.skipLineComment "//"
+    lineCmnt  = L.skipLineComment ";"
     blockCmnt = L.skipBlockComment "/*" "*/"
 
 lexeme :: Parser a -> Parser a

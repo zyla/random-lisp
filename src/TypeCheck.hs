@@ -1,10 +1,12 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module TypeCheck where
 
 import CustomPrelude
+import Control.Monad
 import qualified Data.Map as Map
 
 import Syntax
@@ -17,6 +19,19 @@ lookup id ctx = maybe (Left ("undefined : " <> tshow id)) pure $ Map.lookup id c
 type TC = Either Text
 
 err = Left
+
+tcModule :: [Declaration] -> TC [Declaration]
+tcModule = fmap (reverse . fst) . foldM
+  (\(acc, ctx) decl -> do
+    (ident, ty, decl) <- case decl of
+      Def{ident,body} -> do
+        ty <- infer ctx body
+        pure (ident, ty, decl{type_ = Just ty})
+      Declare{ident,declareType} ->
+        pure (ident, declareType, decl)
+    pure (decl : acc, Map.insert ident ty ctx)
+  )
+  ([], mempty)
 
 infer :: Context -> Expr -> TC Type
 infer ctx = \case
@@ -35,11 +50,12 @@ infer ctx = \case
     case fnty of
       TyFun argtys retty -> do
         argtysInferred <- traverse (infer ctx) args
+        when (argtys /= argtysInferred) $
+          err $ "Argument type mismatch in application: " <> tshow argtys <> " vs " <> tshow argtysInferred
         pure retty
       _ ->
         err $ "Application to a non-function type " <> tshow fnty
 
   Fun args body -> do
-    argBindings <- traverse (\id -> (,) id <$> freshType) args
-    bodyty <- infer (foldr (\(k, v) -> Map.insert k v) ctx argBindings) body
-    pure (TyFun (map snd argBindings) bodyty)
+    bodyty <- infer (foldr (\(k, v) -> Map.insert k v) ctx args) body
+    pure (TyFun (map snd args) bodyty)

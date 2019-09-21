@@ -1,9 +1,8 @@
-(defn 🐱 : (-> [Int Int] Int)
-  [a b]
-  (+ (+ a a) b)
-)
+(declare dynamic/pure : (-> [Int] (Dynamic Int)))
+(declare + : (-> [Int Int] Int))
 
-(defn bar : (-> [Int] Int)
-  [a a]
-  (🐱 a a)
+(def x (dynamic/pure 1))
+
+(defn main []
+  x
 )
