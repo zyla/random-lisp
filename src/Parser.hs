@@ -58,3 +58,6 @@ isSymbolChar :: Char -> Bool
 isSymbolChar c = Text.any (==c) "~!@#$%^&*_+-=,./?:<>"
   || Char.isAlphaNum c
   || (c >= '\x1f000' && c <= '\x1ffff')
+
+sourceFile :: Parser [SExpr]
+sourceFile = many sExpr
