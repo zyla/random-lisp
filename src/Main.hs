@@ -39,6 +39,12 @@ spec = do
     it "non-empty list with spaces" $
       parseS " ( + 12 32 ) " `shouldParse` List [Symbol "+", Num 12, Num 32]
 
+    it "vector" $
+      parseS "[1 2 3]" `shouldParse` Vector [Num 1, Num 2, Num 3]
+
+    it "map" $
+      parseS "{:a 1 :b 2}" `shouldParse` Map [Symbol ":a", Num 1, Symbol ":b", Num 2]
+
     it "symbol" $
       parseS "foo" `shouldParse` Symbol "foo"
 
@@ -46,7 +52,7 @@ spec = do
       parseS "+" `shouldParse` Symbol "+"
 
     it "weird symbol" $
-      parseS "+" `shouldParse` Symbol "+"
+      parseS "->" `shouldParse` Symbol "->"
 
     it "weird symbol 2" $
       parseS "foo->bar1" `shouldParse` Symbol "foo->bar1"

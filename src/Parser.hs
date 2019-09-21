@@ -9,7 +9,6 @@ import Control.Monad
 import Data.Void
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import Text.Megaparsec.Expr
 import qualified Text.Megaparsec.Char.Lexer as L
 
 import SExpr
@@ -30,10 +29,6 @@ lexeme = L.lexeme sc
 symbol :: Text -> Parser Text
 symbol = L.symbol sc
 
--- | 'parens' parses something between parenthesis.
-parens :: Parser a -> Parser a
-parens = between (symbol "(") (symbol ")")
-
 -- | 'integer' parses an integer.
 integer :: Parser Integer
 integer = lexeme L.decimal
@@ -48,14 +43,16 @@ sExpr :: Parser SExpr
 sExpr = optional sc *> sExpr'
 
 sExpr' :: Parser SExpr
-sExpr' =
-  Num <$> integer <|>
-  String <$> stringLiteral <|>
-  Symbol <$> sSymbol <|>
-  List <$> parens (many sExpr')
+sExpr'
+  =   Num <$> integer
+  <|> String <$> stringLiteral
+  <|> Symbol <$> sSymbol
+  <|> List <$> between (symbol "(") (symbol ")") (many sExpr')
+  <|> Vector <$> between (symbol "[") (symbol "]") (many sExpr')
+  <|> Map <$> between (symbol "{") (symbol "}") (many sExpr')
 
 sSymbol :: Parser Text
 sSymbol = lexeme $ Text.pack <$> ((:) <$> satisfy isSymbolChar <*> many (satisfy isSymbolChar))
 
 isSymbolChar :: Char -> Bool
-isSymbolChar c = Text.any (==c) "~!@#$%^&*_+-=,./?:<>" || Char.isAlphaNum c
+isSymbolChar c = Text.any (==c) "~!@#$%^&*_+-=,./?:<>💩" || Char.isAlphaNum c
