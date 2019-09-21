@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Main where
+
+import CustomPrelude
 
 import Test.Hspec
 import Test.Hspec.Megaparsec
@@ -73,5 +76,3 @@ spec = do
 
     it "integer" $
       parseS "1324" `shouldParse` Num 1324
-
-tshow = Text.pack . show

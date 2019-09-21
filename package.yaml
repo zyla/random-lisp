@@ -18,6 +18,7 @@ dependencies:
   - hspec
   - hspec-megaparsec
   - pretty-show
+  - containers
 
 executables:
   plisp:

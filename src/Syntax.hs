@@ -2,15 +2,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Syntax where
 
-import Data.Text (Text)
+import CustomPrelude
+
 import qualified Data.Text as T
 import qualified SExpr as S
 
 newtype Ident = Ident { unIdent :: Text }
-  deriving newtype (Eq, Show)
+  deriving newtype (Eq, Show, Ord)
 
 data Declaration = Declaration { ident :: Ident, type_ :: Maybe Type, body :: Expr }
   deriving (Eq, Show)
@@ -106,5 +108,3 @@ parseDeclaration = \case
 
 parseDeclarations :: [S.SExpr] -> Parser [Declaration]
 parseDeclarations = traverse parseDeclaration
-
-tshow = T.pack . show
