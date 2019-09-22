@@ -86,6 +86,8 @@ const print = x => console.log(x);
 
 const concat = (a, b) => a + b;
 
+const array$slashconcat = (a, b) => a.concat(a, b);
+
 const int$minus$gtstring = value => "" + value;
 
 var currentParent;
@@ -119,6 +121,15 @@ const no$minusprops = [];
 
 const on$minusclick = handler => el => el.addEventListener("click", handler);
 
+const on$minusinput = handler => el => el.addEventListener("input", () => handler(el.value));
+
+const attr = (name, dyn) => el => {
+    el.setAttribute(name, dyn._read());
+    dyn._addListener(value => {
+        el.setAttribute(name, value);
+    });
+};
+
 var debug$minussubscribe = (name, dyn) => dynamic$slashsubscribe(dyn, x => print(concat(concat(name, ": "), int$minus$gtstring(x))));
 
 var order$minusexample = (() => {
@@ -131,6 +142,7 @@ var order$minusexample = (() => {
         el("th", no$minusprops, () => text(dynamic$slashpure(label)));
         return el("td", no$minusprops, body);
     })());
+    var text$minusinput = (props, ref) => el("input", array$slashconcat(props, [ on$minusinput(value => ref$slashwrite(ref, dynamic$slashpure(value))), attr("value", ref) ]), () => (() => {})());
     return render$minusin$minusbody(() => (() => {
         el("table", no$minusprops, () => (() => {
             details$minusrow("Order id", () => text(dynamic$slashbind(order$minusid, _$$0 => dynamic$slashpure(int$minus$gtstring(_$$0)))));
@@ -138,9 +150,15 @@ var order$minusexample = (() => {
             details$minusrow("Customer", () => text(dynamic$slashbind(dynamic$slashbind(customer$minusname, _$$1 => dynamic$slashpure(concat(_$$1, ", "))), _$$2 => dynamic$slashbind(customer$minusphone, _$$3 => dynamic$slashpure(concat(_$$2, _$$3))))));
             return details$minusrow("Status", () => text(dynamic$slashpure("Confirmed")));
         })());
-        el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(customer$minusname, dynamic$slashpure("Krzysztof Jarzyna"))) ], () => text(dynamic$slashpure("Change name"))));
+        el("div", no$minusprops, () => (() => {
+            el("label", no$minusprops, () => text(dynamic$slashpure("Customer name: ")));
+            return text$minusinput(no$minusprops, customer$minusname);
+        })());
         el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(customer$minusphone, dynamic$slashbind(customer$minusphone, _$$4 => dynamic$slashpure(concat(_$$4, "7"))))) ], () => text(dynamic$slashpure("Change phone"))));
-        return el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(restaurant$minusname, dynamic$slashpure("Peppers"))) ], () => text(dynamic$slashpure("Change restaurant"))));
+        return el("div", no$minusprops, () => (() => {
+            el("label", no$minusprops, () => text(dynamic$slashpure("Restaurant: ")));
+            return text$minusinput(no$minusprops, restaurant$minusname);
+        })());
     })());
 })();
 

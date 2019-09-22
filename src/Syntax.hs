@@ -144,7 +144,7 @@ parseParam = \case
     ident <- parseIdent id
     type_ <- parseType ty
     pure (ident, type_)
-  _ -> parseError "param"
+  s -> parseError $ "invalid param: " <> S.ppSExpr s
 
 parseDeclaration :: S.SExpr -> Parser Declaration
 parseDeclaration = \case

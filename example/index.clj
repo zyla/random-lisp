@@ -1,5 +1,6 @@
 (declare print : (forall [a] (-> [a] Unit)))
 (declare concat : (-> [String String] String))
+(declare array/concat : (forall [a] (-> [(Array a) (Array a)] (Array a))))
 (declare int->string : (-> [Int] String))
 
 (declare dynamic/pure : (forall [a] (-> [a] (Dynamic a))))
@@ -33,6 +34,8 @@
 (declare el : (-> [String (Array Prop) (-> [] Unit)] Unit))
 (declare text : (-> [(Dynamic String)] Unit))
 (declare on-click : (-> [(-> [] Unit)] Prop))
+(declare on-input : (-> [(-> [String] Unit)] Prop))
+(declare attr : (-> [String (Dynamic String)] Prop))
 
 (declare render-in-body : (-> [(-> [] Unit)] Unit))
 
@@ -56,6 +59,13 @@
           (el "th" no-props (fn [] (text label)))
           (el "td" no-props body)
         ))))
+
+    (text-input (fn [(props (Array Prop)) (ref (Dynamic String))]
+      (el "input"
+          (array/concat props
+            [(on-input (fn [(value String)] (ref/write ref value)))
+             (attr "value" ref)])
+        (fn [] (do)))))
   ]
 
   (render-in-body (fn []
@@ -67,14 +77,14 @@
         (text "Confirmed"))) ; TODO: (if confirmed "Confirmed" "Waiting")
     ))
     (el "div" no-props (fn []
-      (el "button" [(on-click (fn [] (ref/write customer-name "Krzysztof Jarzyna")))]
-        (fn [] (text "Change name")))))
+      (el "label" no-props (fn [] (text "Customer name: ")))
+      (text-input no-props customer-name)))
     (el "div" no-props (fn []
       (el "button" [(on-click (fn [] (ref/write customer-phone (concat customer-phone "7"))))]
         (fn [] (text "Change phone")))))
     (el "div" no-props (fn []
-      (el "button" [(on-click (fn [] (ref/write restaurant-name "Peppers")))]
-        (fn [] (text "Change restaurant")))))
+      (el "label" no-props (fn [] (text "Restaurant: ")))
+      (text-input no-props restaurant-name)))
   )))
 )
 

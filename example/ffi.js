@@ -77,6 +77,7 @@ const $plus = (a, b) => a + b;
 const $minus = (a, b) => a - b;
 const print = (x) => console.log(x);
 const concat = (a, b) => a + b;
+const array$slashconcat = (a, b) => a.concat(a, b);
 
 const int$minus$gtstring = (value) => "" + value;
 
@@ -113,3 +114,12 @@ const no$minusprops = [];
 
 // (declare on-click : (-> [(-> [] Unit)] Prop))
 const on$minusclick = (handler) => (el) => el.addEventListener('click', handler);
+
+// (declare on-input : (-> [(-> [String] Unit)] Prop))
+const on$minusinput = (handler) => (el) => el.addEventListener('input', () => handler(el.value));
+
+// (declare attr : (-> [String (Dynamic String)] Prop))
+const attr = (name, dyn) => (el) => {
+  el.setAttribute(name, dyn._read());
+  dyn._addListener((value) => { el.setAttribute(name, value); });
+};
