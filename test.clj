@@ -4,6 +4,22 @@
   (forall [a b]
     (-> [(Dynamic a) (-> [a] (Dynamic b))] (Dynamic b))))
 
+(declare dynamic/subscribe :
+  (forall [a]
+    (-> [(Dynamic a) (-> [a] Unit)] Unit)))
+
+(declare ref/new :
+  (forall [a]
+    (-> [a] (Ref a))))
+
+(declare ref/read :
+  (forall [a]
+    (-> [(Ref a)] (Dynamic a))))
+
+(declare ref/write :
+  (forall [a]
+    (-> [(Ref a) a] Unit)))
+
 (declare + : (-> [Int Int] Int))
 
 (def d (dynamic/pure 1))
@@ -13,3 +29,5 @@
 (def d+d (+ d d))
 (def d+s (+ d s))
 (def s+d (+ s d))
+
+; (def ex1 (dynamic/pure d))
