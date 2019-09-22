@@ -90,21 +90,5 @@ var x = ref$slashnew(1);
 var y = ref$slashnew(10);
 
 // (def _ : Unit
-//  (debug-subscribe "x" x))
-var _ = debug$minussubscribe("x",x);
-
-// (def _ : Unit
-//  (debug-subscribe "y" y))
-var _ = debug$minussubscribe("y",y);
-
-// (def _ : Unit
-//  (debug-subscribe "(+ x 100)" (dynamic/bind x (fn ((_$0 Int)) (dynamic/pure (+ _$0 100))))))
-var _ = debug$minussubscribe("(+ x 100)",dynamic$slashbind(x,((_$$0) => dynamic$slashpure($plus(_$$0,100)))));
-
-// (def _ : Unit
-//  (debug-subscribe "(+ (+ x 200) 100)" (dynamic/bind (dynamic/bind x (fn ((_$1 Int)) (dynamic/pure (+ _$1 200)))) (fn ((_$2 Int)) (dynamic/pure (+ _$2 100))))))
-var _ = debug$minussubscribe("(+ (+ x 200) 100)",dynamic$slashbind(dynamic$slashbind(x,((_$$1) => dynamic$slashpure($plus(_$$1,200)))),((_$$2) => dynamic$slashpure($plus(_$$2,100)))));
-
-// (def _ : Unit
-//  (ref/write x 2))
-var _ = ref$slashwrite(x,2);
+//  (do (debug-subscribe "x" x) (debug-subscribe "y" y) (debug-subscribe "(+ x 100)" (dynamic/bind x (fn ((_$0 Int)) (dynamic/pure (+ _$0 100))))) (debug-subscribe "(+ (+ x 200) 100)" (dynamic/bind (dynamic/bind x (fn ((_$1 Int)) (dynamic/pure (+ _$1 200)))) (fn ((_$2 Int)) (dynamic/pure (+ _$2 100))))) (ref/write x 2) (ref/write x 5)))
+var _ = ((()=>{debug$minussubscribe("x",x);debug$minussubscribe("y",y);debug$minussubscribe("(+ x 100)",dynamic$slashbind(x,((_$$0) => dynamic$slashpure($plus(_$$0,100)))));debug$minussubscribe("(+ (+ x 200) 100)",dynamic$slashbind(dynamic$slashbind(x,((_$$1) => dynamic$slashpure($plus(_$$1,200)))),((_$$2) => dynamic$slashpure($plus(_$$2,100)))));ref$slashwrite(x,2);return ref$slashwrite(x,5);})());

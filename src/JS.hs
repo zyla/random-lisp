@@ -10,7 +10,20 @@ import qualified Data.Text as T
 
 type Ident = Text
 
-data Expr = Function (Maybe Ident) [Ident] Expr | Apply Expr [Expr] | Var Ident | String Text | Num Integer | ArrayLit [Expr] | If Expr Expr Expr
+data Expr
+  = Function (Maybe Ident) [Ident] Expr
+  | Apply Expr [Expr]
+  | Var Ident
+  | String Text
+  | Num Integer
+  | ArrayLit [Expr]
+  | If Expr Expr Expr
+  | BlockExpr [Statement]
+  deriving (Eq, Show)
+
+data Statement
+  = StatementExpression Expr
+  | ReturnStatement Expr
   deriving (Eq, Show)
 
 renderExpr :: Expr -> Text
@@ -35,3 +48,13 @@ renderExpr = \case
 
   If cond then_ else_ ->
     "(" <> renderExpr cond <> ")?(" <> renderExpr then_ <> "):(" <> renderExpr else_ <> ")"
+
+  BlockExpr stmts ->
+    "((()=>{" <> foldMap renderStmt stmts <> "})())"
+
+renderStmt :: Statement -> Text
+renderStmt = \case
+  StatementExpression expr ->
+    renderExpr expr <> ";"
+  ReturnStatement expr ->
+    "return " <> renderExpr expr <> ";"

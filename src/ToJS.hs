@@ -21,12 +21,18 @@ toJS = \case
   Syntax.Var id ->
    JS.Var (mangle id)
 
-  -- Special forms
   Syntax.Fun args body ->
     JS.Function Nothing (map (mangle . fst) args) (toJS body)
 
   Syntax.App fn args ->
     JS.Apply (toJS fn) (map toJS args)
+
+  Syntax.Block exprs ->
+    case reverse exprs of
+      (last:prefix) ->
+        JS.BlockExpr $ (JS.StatementExpression . toJS <$> reverse prefix) ++ [JS.ReturnStatement (toJS last)]
+      [] ->
+        JS.Var "null"
 
 mangle :: Syntax.Ident -> Text
 mangle = mangle' . Syntax.unIdent

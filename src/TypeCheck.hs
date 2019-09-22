@@ -98,6 +98,10 @@ infer ctx = \case
     (body, bodyty) <- infer (foldr (\(k, v) -> Map.insert k v) ctx args) body
     pure (Fun args body, TyFun (map snd args) bodyty)
 
+  expr@(Block exprs) -> do
+    exprsTyped <- traverse (infer ctx) exprs
+    pure (Block (map fst exprsTyped), if null exprsTyped then TyVar (Ident "Unit") else snd (last exprsTyped))
+
 stripForall :: Type -> ([Ident], Type)
 stripForall = \case
   TyForall tvs ty -> (tvs, ty)

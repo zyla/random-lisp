@@ -60,6 +60,7 @@ data Expr
   | App Expr [Expr]
   | Fun [(Ident, Type)] Expr
   | Lit Literal
+  | Block [Expr]
   deriving (Eq, Show)
 
 data Literal = IntLiteral Integer | StringLiteral Text
@@ -80,6 +81,8 @@ parseExpr = \case
     pure $ Var (Ident ident)
   S.List [S.Symbol "fn", args, ret] ->
     Fun <$> parseParameterList args <*> parseExpr ret
+  S.List (S.Symbol "do" : exprs) ->
+    Block <$> traverse parseExpr exprs
   S.List (fn : args) ->
     App <$> parseExpr fn <*> traverse parseExpr args
   S.Num x ->
@@ -95,6 +98,8 @@ serializeExpr = \case
     S.Symbol ident
   Fun args ret ->
     S.List [S.Symbol "fn", S.List ((\(ident, ty) -> S.List [serializeIdent ident, serializeType ty]) <$> args), serializeExpr ret]
+  Block exprs ->
+    S.List (S.Symbol "do" : (serializeExpr <$> exprs))
   App fn args ->
     S.List (serializeExpr fn : (serializeExpr <$> args))
   Lit (IntLiteral x) ->
