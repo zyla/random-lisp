@@ -36,11 +36,14 @@
 (declare on-click : (-> [(-> [] Unit)] Prop))
 (declare on-input : (-> [(-> [String] Unit)] Prop))
 (declare attr : (-> [String (Dynamic String)] Prop))
+(declare attr-if : (-> [(Dynamic Boolean) String (Dynamic String)] Prop))
 
 (declare render-in-body : (-> [(-> [] Unit)] Unit))
 
+(declare if : (forall [a] (-> [Boolean a a] a)))
 (declare false : Boolean)
 (declare true : Boolean)
+(declare not : (-> [Boolean] Boolean))
 
 ; Hack, as we can't yet type an empty array
 (declare no-props : (Array Prop))
@@ -74,7 +77,7 @@
       (details-row "Restaurant" (fn [] (text restaurant-name)))
       (details-row "Customer" (fn [] (text (concat (concat customer-name ", ") customer-phone))))
       (details-row "Status" (fn []
-        (text "Confirmed"))) ; TODO: (if confirmed "Confirmed" "Waiting")
+        (text (if confirmed "Confirmed" "Waiting"))))
     ))
     (el "div" no-props (fn []
       (el "label" no-props (fn [] (text "Customer name: ")))
@@ -85,6 +88,16 @@
     (el "div" no-props (fn []
       (el "label" no-props (fn [] (text "Restaurant: ")))
       (text-input no-props restaurant-name)))
+    (el "div" no-props (fn []
+      (el "button"
+          [(on-click (fn [] (ref/write confirmed true)))
+           (attr-if confirmed "disabled" "disabled") ]
+        (fn [] (text "Confirm")))))
+    (el "div" no-props (fn []
+      (el "button"
+          [(on-click (fn [] (ref/write confirmed false)))
+           (attr-if (not confirmed) "disabled" "disabled") ]
+        (fn [] (text "Unconfirm")))))
   )))
 )
 

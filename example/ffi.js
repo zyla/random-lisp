@@ -78,6 +78,7 @@ const $minus = (a, b) => a - b;
 const print = (x) => console.log(x);
 const concat = (a, b) => a + b;
 const array$slashconcat = (a, b) => a.concat(a, b);
+const not = (b) => !b;
 
 const int$minus$gtstring = (value) => "" + value;
 
@@ -123,3 +124,18 @@ const attr = (name, dyn) => (el) => {
   el.setAttribute(name, dyn._read());
   dyn._addListener((value) => { el.setAttribute(name, value); });
 };
+
+const attr$minusif = (condD, name, valueD) => (el) => {
+  const update = (cond, value) => {
+    if(cond) {
+      el.setAttribute(name, value);
+    } else {
+      el.removeAttribute(name);
+    }
+  };
+  update(condD._read(), valueD._read());
+  valueD._addListener((value) => { update(condD._read(), value); });
+  condD._addListener((cond) => { update(cond, valueD._read()); });
+};
+
+const if$ = (cond, then, else_) => cond ? then : else_;

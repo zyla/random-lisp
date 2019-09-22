@@ -57,8 +57,11 @@ mangle :: Syntax.Ident -> Text
 mangle = mangle' . Syntax.unIdent
 
 mangle' :: Text -> Text
-mangle' = T.concatMap $
-  \case
+mangle' t | t `elem` ["if"] -- TODO: add more JS keywords
+  = t <> "$"
+mangle' t = T.concatMap f t
+  where
+  f = \case
     c | isAlphaNum c -> T.singleton c
     '~' -> "$tilde"
     '!' -> "$bang"

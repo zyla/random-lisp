@@ -88,6 +88,8 @@ const concat = (a, b) => a + b;
 
 const array$slashconcat = (a, b) => a.concat(a, b);
 
+const not = b => !b;
+
 const int$minus$gtstring = value => "" + value;
 
 var currentParent;
@@ -130,6 +132,25 @@ const attr = (name, dyn) => el => {
     });
 };
 
+const attr$minusif = (condD, name, valueD) => el => {
+    const update = (cond, value) => {
+        if (cond) {
+            el.setAttribute(name, value);
+        } else {
+            el.removeAttribute(name);
+        }
+    };
+    update(condD._read(), valueD._read());
+    valueD._addListener(value => {
+        update(condD._read(), value);
+    });
+    condD._addListener(cond => {
+        update(cond, valueD._read());
+    });
+};
+
+const if$ = (cond, then, else_) => cond ? then : else_;
+
 var debug$minussubscribe = (name, dyn) => dynamic$slashsubscribe(dyn, x => print(concat(concat(name, ": "), int$minus$gtstring(x))));
 
 var order$minusexample = (() => {
@@ -148,17 +169,19 @@ var order$minusexample = (() => {
             details$minusrow("Order id", () => text(dynamic$slashbind(order$minusid, _$$0 => dynamic$slashpure(int$minus$gtstring(_$$0)))));
             details$minusrow("Restaurant", () => text(restaurant$minusname));
             details$minusrow("Customer", () => text(dynamic$slashbind(dynamic$slashbind(customer$minusname, _$$1 => dynamic$slashpure(concat(_$$1, ", "))), _$$2 => dynamic$slashbind(customer$minusphone, _$$3 => dynamic$slashpure(concat(_$$2, _$$3))))));
-            return details$minusrow("Status", () => text(dynamic$slashpure("Confirmed")));
+            return details$minusrow("Status", () => text(dynamic$slashbind(confirmed, _$$4 => dynamic$slashpure(if$(_$$4, "Confirmed", "Waiting")))));
         })());
         el("div", no$minusprops, () => (() => {
             el("label", no$minusprops, () => text(dynamic$slashpure("Customer name: ")));
             return text$minusinput(no$minusprops, customer$minusname);
         })());
-        el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(customer$minusphone, dynamic$slashbind(customer$minusphone, _$$4 => dynamic$slashpure(concat(_$$4, "7"))))) ], () => text(dynamic$slashpure("Change phone"))));
-        return el("div", no$minusprops, () => (() => {
+        el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(customer$minusphone, dynamic$slashbind(customer$minusphone, _$$5 => dynamic$slashpure(concat(_$$5, "7"))))) ], () => text(dynamic$slashpure("Change phone"))));
+        el("div", no$minusprops, () => (() => {
             el("label", no$minusprops, () => text(dynamic$slashpure("Restaurant: ")));
             return text$minusinput(no$minusprops, restaurant$minusname);
         })());
+        el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(confirmed, dynamic$slashpure(true))), attr$minusif(confirmed, "disabled", dynamic$slashpure("disabled")) ], () => text(dynamic$slashpure("Confirm"))));
+        return el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(confirmed, dynamic$slashpure(false))), attr$minusif(dynamic$slashbind(confirmed, _$$6 => dynamic$slashpure(not(_$$6))), "disabled", dynamic$slashpure("disabled")) ], () => text(dynamic$slashpure("Unconfirm"))));
     })());
 })();
 
@@ -166,8 +189,8 @@ var counter$minusexample = (() => {
     var count = ref$slashnew(0);
     return render$minusin$minusbody(() => (() => {
         el("h2", no$minusprops, () => text(dynamic$slashpure("Counter")));
-        el("div", no$minusprops, () => text(dynamic$slashbind(count, _$$5 => dynamic$slashpure(int$minus$gtstring(_$$5)))));
-        el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(count, dynamic$slashbind(count, _$$6 => dynamic$slashpure($plus(_$$6, 1))))) ], () => text(dynamic$slashpure("Increment"))));
-        return el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(count, dynamic$slashbind(count, _$$7 => dynamic$slashpure($minus(_$$7, 1))))) ], () => text(dynamic$slashpure("Decrement"))));
+        el("div", no$minusprops, () => text(dynamic$slashbind(count, _$$7 => dynamic$slashpure(int$minus$gtstring(_$$7)))));
+        el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(count, dynamic$slashbind(count, _$$8 => dynamic$slashpure($plus(_$$8, 1))))) ], () => text(dynamic$slashpure("Increment"))));
+        return el("div", no$minusprops, () => el("button", [ on$minusclick(() => ref$slashwrite(count, dynamic$slashbind(count, _$$9 => dynamic$slashpure($minus(_$$9, 1))))) ], () => text(dynamic$slashpure("Decrement"))));
     })());
 })();
