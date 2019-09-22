@@ -16,10 +16,6 @@
   (forall [a]
     (-> [a] (Dynamic a))))
 
-; (declare ref/read :
-;   (forall [a]
-;     (-> [(Ref a)] (Dynamic a))))
-
 (declare ref/write :
   (forall [a]
     (-> [(Dynamic a) a] Unit)))
