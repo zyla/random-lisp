@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE TupleSections #-}
 {-# OPTIONS_GHC -Wincomplete-patterns #-}
 
 module TypeCheck where
@@ -10,6 +11,7 @@ import CustomPrelude
 import Control.Monad
 import qualified Data.Map as Map
 import qualified Data.Set as Set
+import Data.Bifunctor
 import Control.Monad.State
 
 import Syntax
@@ -23,10 +25,11 @@ type Substitution = Map Ident Type
 
 data S = S
   { substitution :: Substitution
+  , nextUnique :: Int
   }
 
 initialState :: S
-initialState = S { substitution = mempty }
+initialState = S { substitution = mempty, nextUnique = 0 }
 
 type TC = StateT S (Either Text)
 
@@ -41,49 +44,52 @@ tcModule = fmap (reverse . fst) . foldM
   (\(acc, ctx) decl -> do
     (ident, ty, decl) <- case decl of
       Def{ident,body} -> do
-        ty <- infer ctx body
-        pure (ident, ty, decl{type_ = Just ty})
+        (body, ty) <- infer ctx body
+        pure (ident, ty, decl{type_ = Just ty, body = body})
       Declare{ident,declareType} ->
         pure (ident, declareType, decl)
     pure (decl : acc, Map.insert ident ty ctx)
   )
   ([], mempty)
 
-infer :: Context -> Expr -> TC Type
+infer :: Context -> Expr -> TC (Expr, Type)
 infer ctx = \case
 
-  Var id ->
-    lookup id ctx
+  expr@(Var id) ->
+    (expr,) <$> lookup id ctx
 
-  Lit (IntLiteral _) ->
-    pure (TyVar (Ident "Int"))
+  expr@(Lit (IntLiteral _)) ->
+    pure (expr, TyVar (Ident "Int"))
 
-  Lit (StringLiteral _) ->
-    pure (TyVar (Ident "String"))
+  expr@(Lit (StringLiteral _)) ->
+    pure (expr, TyVar (Ident "String"))
 
   App fn args -> do
-    (tvs, fnty) <- stripForall <$> infer ctx fn
+    (fn, (tvs, fnty)) <- second stripForall <$> infer ctx fn
     let tvSet = Set.fromList tvs
-    argtysInferred <- traverse (infer ctx) args
+    argsActual <- traverse (infer ctx) args
     case fnty of
       TyFun argtys retty -> do
 --        when (argtys /= argtysInferred) $
 --          err $ "Argument type mismatch in application: " <> tshow argtys <> " vs " <> tshow argtysInferred
 
-        when (length argtys /= length argtysInferred) $
-          err $ "Argument type mismatch in application: " <> tshow argtys <> " vs " <> tshow argtysInferred
+        when (length argtys /= length argsActual) $
+          err $ "Argument type mismatch in application: " <> tshow argtys <> " vs " <> tshow argsActual
 
-        sub <- extractSubst $
-          forM_ (zip argtys argtysInferred) $ \(t1, t2) ->
-            unifyD tvSet (stripDynamic t1) (stripDynamic t2)
+        (arginfos, sub) <- extractSubst $
+          forM (zip argsActual argtys) $ \((arg, actualType), expectedType) ->
+            unifyD tvSet (stripDynamic actualType) (stripDynamic expectedType) arg
 
-        pure (subst sub retty)
+        let modifyCtx = foldr ((.) . fst) id arginfos
+        let argExprs = map snd arginfos
+
+        pure (modifyCtx $ App fn argExprs, subst sub retty)
       _ ->
         err $ "Application to a non-function type " <> tshow fnty
 
   Fun args body -> do
-    bodyty <- infer (foldr (\(k, v) -> Map.insert k v) ctx args) body
-    pure (TyFun (map snd args) bodyty)
+    (body, bodyty) <- infer (foldr (\(k, v) -> Map.insert k v) ctx args) body
+    pure (body, TyFun (map snd args) bodyty)
 
 stripForall :: Type -> ([Ident], Type)
 stripForall = \case
@@ -94,8 +100,8 @@ data Dynamicity = Dynamic | Static
 
 stripDynamic :: Type -> (Dynamicity, Type)
 stripDynamic = \case
-  TyApp (TyVar (Ident "Dynamic")) [ty] -> ty
-  ty -> ty
+  TyApp (TyVar (Ident "Dynamic")) [ty] -> (Dynamic, ty)
+  ty -> (Static, ty)
 
 type Unknowns = Set Ident
 
@@ -104,11 +110,19 @@ solve unknown ty = do
   -- TODO: occurs check
   modify (\s -> s { substitution = Map.insert unknown ty (substitution s) })
 
-extractSubst :: TC () -> TC Substitution
-extractSubst block =
-  withStateT (\s -> s { substitution = mempty }) $ do
-    block
-    gets substitution
+extractSubst :: TC a -> TC (a, Substitution)
+extractSubst block = do
+  prev <- get
+  ret <- block
+  sub <- gets substitution
+  modify (\s -> s { substitution = substitution prev })
+  pure (ret, sub)
+
+generateName :: Text -> TC Ident
+generateName prefix = do
+  id <- gets nextUnique
+  modify (\s -> s { nextUnique = id + 1 })
+  pure $ Ident $ prefix <> "_$" <> tshow id
 
 subst :: Map Ident Type -> Type -> Type
 subst sub = \case
@@ -130,13 +144,22 @@ subst sub = \case
           -- subst [(a, Maybe b)] (forall b. a -> b)
     in TyForall ids (subst sub' ty)
 
-unifyD :: Unknowns -> (Dynamicity, Type) -> (Dynamicity, Type) -> TC ()
-unifyD u (Dynamic, ty1) (Dynamic, ty2) =
+unifyD :: Unknowns -> (Dynamicity, Type) -> (Dynamicity, Type) -> Expr -> TC (Expr -> Expr, Expr)
+unifyD u (Dynamic, ty1) (Dynamic, ty2) arg = do
   unify u ty1 ty2
-unifyD u (Static, ty1) (Static, ty2) =
+  pure (id, arg)
+unifyD u (Static, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
-unifyD u (Dynamic, ty1) (Static, ty2) =
+  pure (id, arg)
+unifyD u (Dynamic, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
+  nm <- generateName ""
+  pure 
+    ( \ctx -> App (Var (Ident "dynamic/bind")) [arg, Fun [(nm, ty2 {- FIXME: substitute in ty2 -})] ctx]
+    , Var nm )
+unifyD u (Static, ty1) (Dynamic, ty2) arg = do
+  unify u ty1 ty2
+  pure (id, App (Var (Ident "dynamic/pure")) [arg])
 
 unify :: Unknowns -> Type -> Type -> TC ()
 unify u t1 t2 = do
