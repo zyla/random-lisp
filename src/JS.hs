@@ -16,7 +16,7 @@ data Expr = Function (Maybe Ident) [Ident] Expr | Apply Expr [Expr] | Var Ident 
 renderExpr :: Expr -> Text
 renderExpr = \case
   Function ident args body ->
-    "(function " <> fromMaybe "" ident <> "(" <> T.intercalate "," args <> ") { return " <> renderExpr body <> "; })"
+    "(" <> fromMaybe "" ident <> "(" <> T.intercalate "," args <> ") => " <> renderExpr body <> ")"
 
   Var ident ->
     ident

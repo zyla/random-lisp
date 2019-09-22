@@ -1,19 +1,17 @@
-function _addListener(listeners, l) {
-  listeners.push(l);
-}
+const _addListener = (listeners, l) => listeners.push(l);
 
-function _removeListener(listeners, l) {
+const _removeListener = (listeners, l) => {
   var i = listeners.indexOf(l);
   if(i !== -1) { listeners.splice(i, 1); }
-}
+};
 
-function _notify(listeners, value) {
+const _notify = (listeners, value) => {
   for(var l of listeners) {
     l(value);
   }
-}
+};
 
-function ref$slashnew(value) {
+const ref$slashnew = (value) => {
   var listeners = [];
   return {
     read: () => value,
@@ -24,35 +22,30 @@ function ref$slashnew(value) {
       _notify(listeners, value);
     }
   };
-}
+};
 
-function ref$slashread(ref) {
-  return ref;
-}
+const ref$slashread = (ref) => ref;
 
-function ref$slashwrite(ref, value) {
-  ref.write(value);
-}
+const ref$slashwrite = (ref, value) => ref.write(value);
 
-function dynamic$slashpure(value) {
-  return {
-    read: () => value,
-    addListener: () => {},
-    removeListener: () => {},
-  };
-}
+const dynamic$slashpure = (value) => ({
+  read: () => value,
+  addListener: () => {},
+  removeListener: () => {},
+});
 
-function dynamic$slashbind(outer, cont) {
-  var listeners = [];
+const dynamic$slashbind = (outer, cont) => {
   var inner = null;
   var value = null;
 
-  var onInnerChange = (innerValue) => {
+  const listeners = [];
+
+  const onInnerChange = (innerValue) => {
     value = innerValue;
     _notify(listeners, value);
   };
 
-  var onOuterChange = (value) => {
+  const onOuterChange = (value) => {
     if(inner) {
       inner.removeListener(onInnerChange);
     }
@@ -61,7 +54,7 @@ function dynamic$slashbind(outer, cont) {
     onInnerChange(inner.read());
   };
 
-  function init() {
+  const init = () => {
     outer.addListener(onOuterChange); // FIXME: this listener leaks
     inner = cont(outer.read());
     value = inner.read();
@@ -76,30 +69,17 @@ function dynamic$slashbind(outer, cont) {
   };
 }
 
-function dynamic$slashsubscribe(dyn, l) {
-  dyn.addListener(l);
-}
+const dynamic$slashsubscribe = (dyn, l) => dyn.addListener(l);
+const $plus = (a, b) => a + b;
+const print = (x) => console.log(x);
+const concat = (a, b) => a + b;
 
-function $plus(a, b) {
-  return a + b;
-}
-
-function print(x) {
-  console.log(x);
-}
-
-function concat(a, b) {
-  return a + b;
-}
-
-function int$minus$gtstring(value) {
-  return "" + value;
-}
+const int$minus$gtstring = (value) => "" + value;
 
 
 // (def debug-subscribe : (-> [String (Dynamic Int)] Unit)
 //  (fn ((name String) (dyn (Dynamic Int))) (dynamic/subscribe dyn (fn ((x Int)) (print (concat (concat name ": ") (int->string x)))))))
-var debug$minussubscribe = (function (name,dyn) { return dynamic$slashsubscribe(dyn,(function (x) { return print(concat(concat(name,": "),int$minus$gtstring(x))); })); });
+var debug$minussubscribe = ((name,dyn) => dynamic$slashsubscribe(dyn,((x) => print(concat(concat(name,": "),int$minus$gtstring(x))))));
 
 // (def x : (Dynamic Int)
 //  (ref/new 1))
@@ -119,11 +99,11 @@ var _ = debug$minussubscribe("y",y);
 
 // (def _ : Unit
 //  (debug-subscribe "(+ x 100)" (dynamic/bind x (fn ((_$0 Int)) (dynamic/pure (+ _$0 100))))))
-var _ = debug$minussubscribe("(+ x 100)",dynamic$slashbind(x,(function (_$$0) { return dynamic$slashpure($plus(_$$0,100)); })));
+var _ = debug$minussubscribe("(+ x 100)",dynamic$slashbind(x,((_$$0) => dynamic$slashpure($plus(_$$0,100)))));
 
 // (def _ : Unit
 //  (debug-subscribe "(+ (+ x 200) 100)" (dynamic/bind (dynamic/bind x (fn ((_$1 Int)) (dynamic/pure (+ _$1 200)))) (fn ((_$2 Int)) (dynamic/pure (+ _$2 100))))))
-var _ = debug$minussubscribe("(+ (+ x 200) 100)",dynamic$slashbind(dynamic$slashbind(x,(function (_$$1) { return dynamic$slashpure($plus(_$$1,200)); })),(function (_$$2) { return dynamic$slashpure($plus(_$$2,100)); })));
+var _ = debug$minussubscribe("(+ (+ x 200) 100)",dynamic$slashbind(dynamic$slashbind(x,((_$$1) => dynamic$slashpure($plus(_$$1,200)))),((_$$2) => dynamic$slashpure($plus(_$$2,100)))));
 
 // (def _ : Unit
 //  (ref/write x 2))
