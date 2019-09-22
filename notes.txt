@@ -1,6 +1,6 @@
 What is needed for a DOM example:
 
-- [ ] `let` expression
+- [x] `let` expression
 - [x] `do` expression
 - [ ] array literals (for props)
 
