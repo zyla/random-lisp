@@ -6,37 +6,30 @@ module ToJS where
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Char (isAlphaNum)
-import SExpr
+import qualified Syntax
 import Text.Printf
 import JS
 
-toJS :: SExpr -> JS.Expr
+toJS :: Syntax.Expr -> JS.Expr
 toJS = \case
-  SExpr.Num x -> JS.Num x
-  SExpr.Symbol sym -> JS.Var (mangle sym)
+  Syntax.Lit (Syntax.IntLiteral x) ->
+    JS.Num x
+
+  Syntax.Var id ->
+   JS.Var (mangle id)
 
   -- Special forms
-  SExpr.List [SExpr.Symbol "lambda", SExpr.List args, body]
-    | Just args' <- traverse fromSymbol args 
-      -> JS.Function Nothing (map mangle args') (toJS body)
+  Syntax.Fun args body ->
+    JS.Function Nothing (map (mangle . fst) args) (toJS body)
 
-  SExpr.List [SExpr.Symbol "fix", SExpr.Symbol name, SExpr.List args, body]
-    | Just args' <- traverse fromSymbol args 
-      -> JS.Function (Just (mangle name)) (map mangle args') (toJS body)
+  Syntax.App fn args ->
+    JS.Apply (toJS fn) (map toJS args)
 
-  SExpr.List [SExpr.Symbol "if", cond, then_, else_] ->
-    JS.If (toJS cond) (toJS then_) (toJS else_)
+mangle :: Syntax.Ident -> Text
+mangle = mangle' . Syntax.unIdent
 
-  SExpr.List (fn:args) -> JS.Apply (toJS fn) (map toJS args)
-  SExpr.List [] -> JS.ArrayLit []
-
-fromSymbol :: SExpr -> Maybe Text
-fromSymbol = \case
-  Symbol x -> Just x
-  _ -> Nothing
-
-mangle :: Ident -> Text
-mangle = T.concatMap $
+mangle' :: Text -> Text
+mangle' = T.concatMap $
   \case
     c | isAlphaNum c -> T.singleton c
     '~' -> "$tilde"

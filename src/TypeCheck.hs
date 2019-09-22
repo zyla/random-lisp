@@ -80,10 +80,11 @@ infer ctx = \case
           forM (zip argsActual argtys) $ \((arg, actualType), expectedType) ->
             unifyD tvSet (stripDynamic actualType) (stripDynamic expectedType) arg
 
-        let modifyCtx = foldr ((.) . fst) id arginfos
-        let argExprs = map snd arginfos
+        let modifyCtx = foldr (\(modifyCtx, _, _) acc -> modifyCtx . acc) id arginfos
+        let modifyCtxType = foldr (\(_, modifyCtxTy, _) acc -> modifyCtxTy . acc) id arginfos
+        let argExprs = map (\(_, _, expr) -> expr) arginfos
 
-        pure (modifyCtx $ App fn argExprs, subst sub retty)
+        pure (modifyCtx $ App fn argExprs, modifyCtxType (subst sub retty))
       _ ->
         err $ "Application to a non-function type " <> tshow fnty
 
@@ -144,22 +145,26 @@ subst sub = \case
           -- subst [(a, Maybe b)] (forall b. a -> b)
     in TyForall ids (subst sub' ty)
 
-unifyD :: Unknowns -> (Dynamicity, Type) -> (Dynamicity, Type) -> Expr -> TC (Expr -> Expr, Expr)
+unifyD :: Unknowns -> (Dynamicity, Type) -> (Dynamicity, Type) -> Expr -> TC (Expr -> Expr, Type -> Type, Expr)
 unifyD u (Dynamic, ty1) (Dynamic, ty2) arg = do
   unify u ty1 ty2
-  pure (id, arg)
+  pure (id, id, arg)
 unifyD u (Static, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
-  pure (id, arg)
+  pure (id, id, arg)
 unifyD u (Dynamic, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
+  sub <- gets substitution
   nm <- generateName ""
   pure 
-    ( \ctx -> App (Var (Ident "dynamic/bind")) [arg, Fun [(nm, ty2 {- FIXME: substitute in ty2 -})] ctx]
+    ( \ctx -> App (Var (Ident "dynamic/bind")) [arg, Fun [(nm, subst sub ty2)] ctx]
+    , dynamicize
     , Var nm )
 unifyD u (Static, ty1) (Dynamic, ty2) arg = do
   unify u ty1 ty2
-  pure (id, App (Var (Ident "dynamic/pure")) [arg])
+  pure (id, id, App (Var (Ident "dynamic/pure")) [arg])
+
+dynamicize ty = TyApp (TyVar (Ident "Dynamic")) [snd (stripDynamic ty)]
 
 unify :: Unknowns -> Type -> Type -> TC ()
 unify u t1 t2 = do
