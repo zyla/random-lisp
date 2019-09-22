@@ -14,10 +14,10 @@ const _notify = (listeners, value) => {
 const ref$slashnew = (value) => {
   var listeners = [];
   return {
-    read: () => value,
-    addListener: (l) => { _addListener(listeners, l); },
-    removeListener: (l) => { _removeListener(listeners, l) },
-    write: (newValue) => {
+    _read: () => value,
+    _addListener: (l) => { _addListener(listeners, l); },
+    _removeListener: (l) => { _removeListener(listeners, l) },
+    _write: (newValue) => {
       value = newValue;
       _notify(listeners, value);
     }
@@ -26,12 +26,12 @@ const ref$slashnew = (value) => {
 
 const ref$slashread = (ref) => ref;
 
-const ref$slashwrite = (ref, value) => ref.write(value);
+const ref$slashwrite = (ref, value) => ref._write(value);
 
 const dynamic$slashpure = (value) => ({
-  read: () => value,
-  addListener: () => {},
-  removeListener: () => {},
+  _read: () => value,
+  _addListener: () => {},
+  _removeListener: () => {},
 });
 
 const dynamic$slashbind = (outer, cont) => {
@@ -47,29 +47,29 @@ const dynamic$slashbind = (outer, cont) => {
 
   const onOuterChange = (value) => {
     if(inner) {
-      inner.removeListener(onInnerChange);
+      inner._removeListener(onInnerChange);
     }
     inner = cont(value);
-    inner.addListener(onInnerChange);
-    onInnerChange(inner.read());
+    inner._addListener(onInnerChange);
+    onInnerChange(inner._read());
   };
 
   const init = () => {
-    outer.addListener(onOuterChange); // FIXME: this listener leaks
-    inner = cont(outer.read());
-    value = inner.read();
+    outer._addListener(onOuterChange); // FIXME: this listener leaks
+    inner = cont(outer._read());
+    value = inner._read();
   }
 
   init();
   
   return {
-    read: () => value,
-    addListener: (l) => { _addListener(listeners, l); },
-    removeListener: (l) => { _removeListener(listeners, l) },
+    _read: () => value,
+    _addListener: (l) => { _addListener(listeners, l); },
+    _removeListener: (l) => { _removeListener(listeners, l) },
   };
 }
 
-const dynamic$slashsubscribe = (dyn, l) => dyn.addListener(l);
+const dynamic$slashsubscribe = (dyn, l) => dyn._addListener(l);
 const $plus = (a, b) => a + b;
 const print = (x) => console.log(x);
 const concat = (a, b) => a + b;

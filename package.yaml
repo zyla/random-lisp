@@ -1,8 +1,5 @@
 name:                random-lisp
 version:             0.1.0.0
-#synopsis:
-#description:
-homepage:            https://github.com/githubuser/plisp#readme
 license:             BSD3
 author:              Author name here
 maintainer:          example@example.com
@@ -23,6 +20,6 @@ dependencies:
   - transformers
 
 executables:
-  plisp:
+  random-lisp:
     source-dirs:      src
     main:             Main.hs
