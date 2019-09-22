@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module ToJS where
+
+import CustomPrelude
 
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -28,11 +31,24 @@ toJS = \case
     JS.Apply (toJS fn) (map toJS args)
 
   Syntax.Block exprs ->
-    case reverse exprs of
-      (last:prefix) ->
-        JS.BlockExpr $ (JS.StatementExpression . toJS <$> reverse prefix) ++ [JS.ReturnStatement (toJS last)]
-      [] ->
-        JS.Var "null"
+    JS.BlockExpr $ toJSBlock exprs
+
+  Syntax.Let binders expr ->
+    JS.BlockExpr $
+      ((\(ident, expr) -> JS.VariableDefinition (mangle ident) (toJS expr)) <$> binders) <>
+      toJSBlock (toBlock expr)
+
+  e ->
+    terror $ "ToJS: unhandled: " <> Syntax.ppExpr e
+
+  where
+    toBlock (Syntax.Block exprs) = exprs
+    toBlock e = [e]
+
+    toJSBlock exprs =
+      case reverse exprs of
+        (last:prefix) -> (JS.StatementExpression . toJS <$> reverse prefix) ++ [JS.ReturnStatement (toJS last)]
+        []            -> []
 
 mangle :: Syntax.Ident -> Text
 mangle = mangle' . Syntax.unIdent

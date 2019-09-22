@@ -22,8 +22,9 @@ data Expr
   deriving (Eq, Show)
 
 data Statement
-  = StatementExpression Expr
-  | ReturnStatement Expr
+  = StatementExpression Expr      -- e;
+  | ReturnStatement Expr          -- return e;
+  | VariableDefinition Text Expr  -- var v = e;
   deriving (Eq, Show)
 
 renderExpr :: Expr -> Text
@@ -58,3 +59,5 @@ renderStmt = \case
     renderExpr expr <> ";"
   ReturnStatement expr ->
     "return " <> renderExpr expr <> ";"
+  VariableDefinition ident expr ->
+    "var " <> ident <> " = " <> renderExpr expr <> ";"

@@ -81,14 +81,6 @@ const int$minus$gtstring = (value) => "" + value;
 //  (fn ((name String) (dyn (Dynamic Int))) (dynamic/subscribe dyn (fn ((x Int)) (print (concat (concat name ": ") (int->string x)))))))
 var debug$minussubscribe = ((name,dyn) => dynamic$slashsubscribe(dyn,((x) => print(concat(concat(name,": "),int$minus$gtstring(x))))));
 
-// (def x : (Dynamic Int)
-//  (ref/new 1))
-var x = ref$slashnew(1);
-
-// (def y : (Dynamic Int)
-//  (ref/new 10))
-var y = ref$slashnew(10);
-
 // (def _ : Unit
-//  (do (debug-subscribe "x" x) (debug-subscribe "y" y) (debug-subscribe "(+ x 100)" (dynamic/bind x (fn ((_$0 Int)) (dynamic/pure (+ _$0 100))))) (debug-subscribe "(+ (+ x 200) 100)" (dynamic/bind (dynamic/bind x (fn ((_$1 Int)) (dynamic/pure (+ _$1 200)))) (fn ((_$2 Int)) (dynamic/pure (+ _$2 100))))) (ref/write x 2) (ref/write x 5)))
-var _ = ((()=>{debug$minussubscribe("x",x);debug$minussubscribe("y",y);debug$minussubscribe("(+ x 100)",dynamic$slashbind(x,((_$$0) => dynamic$slashpure($plus(_$$0,100)))));debug$minussubscribe("(+ (+ x 200) 100)",dynamic$slashbind(dynamic$slashbind(x,((_$$1) => dynamic$slashpure($plus(_$$1,200)))),((_$$2) => dynamic$slashpure($plus(_$$2,100)))));ref$slashwrite(x,2);return ref$slashwrite(x,5);})());
+//  (let [(x (ref/new 1)) (y (ref/new 10))] (do (debug-subscribe "x" x) (debug-subscribe "y" y) (debug-subscribe "(+ x 100)" (dynamic/bind x (fn ((_$0 Int)) (dynamic/pure (+ _$0 100))))) (debug-subscribe "(+ (+ x 200) 100)" (dynamic/bind (dynamic/bind x (fn ((_$1 Int)) (dynamic/pure (+ _$1 200)))) (fn ((_$2 Int)) (dynamic/pure (+ _$2 100))))) (do (ref/write x 2) (ref/write x 5)))))
+var _ = ((()=>{var x = ref$slashnew(1);var y = ref$slashnew(10);debug$minussubscribe("x",x);debug$minussubscribe("y",y);debug$minussubscribe("(+ x 100)",dynamic$slashbind(x,((_$$0) => dynamic$slashpure($plus(_$$0,100)))));debug$minussubscribe("(+ (+ x 200) 100)",dynamic$slashbind(dynamic$slashbind(x,((_$$1) => dynamic$slashpure($plus(_$$1,200)))),((_$$2) => dynamic$slashpure($plus(_$$2,100)))));return ((()=>{ref$slashwrite(x,2);return ref$slashwrite(x,5);})());})());

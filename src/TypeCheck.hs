@@ -102,6 +102,22 @@ infer ctx = \case
     exprsTyped <- traverse (infer ctx) exprs
     pure (Block (map fst exprsTyped), if null exprsTyped then TyVar (Ident "Unit") else snd (last exprsTyped))
 
+  Let binders body -> do
+    (binders, body, ty) <- tcLet ctx binders body
+    pure (Let binders body, ty)
+
+  expr ->
+    terror $ "TypeCheck: unhandled: " <> ppExpr expr
+
+tcLet :: Context -> [(Ident, Expr)] -> Expr -> TC ([(Ident, Expr)], Expr, Type)
+tcLet ctx [] body = do
+  (body, ty) <- infer ctx body
+  pure ([], body, ty)
+tcLet ctx ((ident, expr):binders) body = do
+  (expr, ty) <- infer ctx expr
+  (binders, body, resultTy) <- tcLet (Map.insert ident ty ctx) binders body
+  pure ((ident, expr):binders, body, resultTy)
+
 stripForall :: Type -> ([Ident], Type)
 stripForall = \case
   TyForall tvs ty -> (tvs, ty)

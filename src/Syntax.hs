@@ -61,6 +61,7 @@ data Expr
   | Fun [(Ident, Type)] Expr
   | Lit Literal
   | Block [Expr]
+  | Let [(Ident, Expr)] Expr
   deriving (Eq, Show)
 
 data Literal = IntLiteral Integer | StringLiteral Text
@@ -82,7 +83,11 @@ parseExpr = \case
   S.List [S.Symbol "fn", args, ret] ->
     Fun <$> parseParameterList args <*> parseExpr ret
   S.List (S.Symbol "do" : exprs) ->
-    Block <$> traverse parseExpr exprs
+    makeBlock <$> traverse parseExpr exprs
+  S.List (S.Symbol "let" : S.Vector binders : exprs) ->
+    Let
+      <$> traverse parseLetBinder binders
+      <*> (makeBlock <$> traverse parseExpr exprs)
   S.List (fn : args) ->
     App <$> parseExpr fn <*> traverse parseExpr args
   S.Num x ->
@@ -90,7 +95,17 @@ parseExpr = \case
   S.String x ->
     pure $ Lit (StringLiteral x)
   s ->
-    parseError $ "invalid expr: " <> tshow s
+    parseError $ "invalid expr: " <> S.ppSExpr s
+
+parseLetBinder :: S.SExpr -> Parser (Ident, Expr)
+parseLetBinder = \case
+  S.List [S.Symbol ident, expr] ->
+    (,) (Ident ident) <$> parseExpr expr
+  s ->
+    parseError $ "invalid let binder: " <> S.ppSExpr s
+
+makeBlock [x] = x
+makeBlock xs = Block xs
 
 serializeExpr :: Expr -> S.SExpr
 serializeExpr = \case
@@ -100,12 +115,21 @@ serializeExpr = \case
     S.List [S.Symbol "fn", S.List ((\(ident, ty) -> S.List [serializeIdent ident, serializeType ty]) <$> args), serializeExpr ret]
   Block exprs ->
     S.List (S.Symbol "do" : (serializeExpr <$> exprs))
+  Let binders body -> 
+    S.List [S.Symbol "let", S.Vector (serializeLetBinder <$> binders), serializeExpr body]
   App fn args ->
     S.List (serializeExpr fn : (serializeExpr <$> args))
   Lit (IntLiteral x) ->
     S.Num x
   Lit (StringLiteral x) ->
     S.String x
+  expr ->
+    terror $ "serializeExpr: unhandled " <> tshow expr
+
+serializeLetBinder (ident, expr) = S.List [serializeIdent ident, serializeExpr expr]
+
+ppExpr = S.ppSExpr . serializeExpr
+ppType = S.ppSExpr . serializeType
 
 parseParameterList = \case
   S.Vector args -> traverse parseParam args

@@ -25,15 +25,18 @@
 
 (declare + : (-> [Int Int] Int))
 
-(def x (ref/new 1))
-(def y (ref/new 10))
-
-(def _ (do
+(def _
+  (let [
+    (x (ref/new 1))
+    (y (ref/new 10))
+  ]
   (debug-subscribe "x" x)
   (debug-subscribe "y" y)
   (debug-subscribe "(+ x 100)" (+ x 100))
   (debug-subscribe "(+ (+ x 200) 100)" (+ (+ x 200) 100))
 
-  (ref/write x 2)
-  (ref/write x 5)
+  (do
+    (ref/write x 2)
+    (ref/write x 5)
+  )
 ))
