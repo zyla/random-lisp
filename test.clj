@@ -5,8 +5,6 @@
 
 (declare + : (-> [Int Int] Int))
 
-(def x (dynamic/pure 1))
-
 (defn main []
-  (dynamic/lift2 + x x)
+  (+ (dynamic/pure 1) 2)
 )

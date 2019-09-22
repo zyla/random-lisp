@@ -75,7 +75,7 @@ infer ctx = \case
 
         sub <- extractSubst $
           forM_ (zip argtys argtysInferred) $ \(t1, t2) ->
-            unify tvSet t1 t2
+            unifyD tvSet (stripDynamic t1) (stripDynamic t2)
 
         pure (subst sub retty)
       _ ->
@@ -89,6 +89,13 @@ stripForall :: Type -> ([Ident], Type)
 stripForall = \case
   TyForall tvs ty -> (tvs, ty)
   ty -> ([], ty)
+
+data Dynamicity = Dynamic | Static
+
+stripDynamic :: Type -> (Dynamicity, Type)
+stripDynamic = \case
+  TyApp (TyVar (Ident "Dynamic")) [ty] -> ty
+  ty -> ty
 
 type Unknowns = Set Ident
 
@@ -122,6 +129,14 @@ subst sub = \case
           -- but NOT name capture! Consider:
           -- subst [(a, Maybe b)] (forall b. a -> b)
     in TyForall ids (subst sub' ty)
+
+unifyD :: Unknowns -> (Dynamicity, Type) -> (Dynamicity, Type) -> TC ()
+unifyD u (Dynamic, ty1) (Dynamic, ty2) =
+  unify u ty1 ty2
+unifyD u (Static, ty1) (Static, ty2) =
+  unify u ty1 ty2
+unifyD u (Dynamic, ty1) (Static, ty2) =
+  unify u ty1 ty2
 
 unify :: Unknowns -> Type -> Type -> TC ()
 unify u t1 t2 = do
