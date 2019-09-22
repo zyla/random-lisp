@@ -31,7 +31,7 @@ main = do
     Right x -> pure x
 
   decls <-
-    case TC.tcModule decls of
+    case TC.run $ TC.tcModule decls of
       Left err -> do
         Text.putStrLn err
         error "err"

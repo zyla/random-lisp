@@ -19,6 +19,8 @@ dependencies:
   - hspec-megaparsec
   - pretty-show
   - containers
+  - mtl
+  - transformers
 
 executables:
   plisp:
