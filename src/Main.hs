@@ -25,28 +25,31 @@ import qualified TypeCheck as TC
 
 main :: IO ()
 main = do
-  contents <- Text.readFile "test.clj"
-  decls <- case first tshow (MP.parse (Parser.sourceFile <* MP.eof) "" contents) >>= Syntax.parseDeclarations of
+  ffi <- Text.readFile "example/ffi.js"
+  contents <- Text.readFile "example/index.clj"
+
+  decls <- case first (Text.pack . MP.parseErrorPretty) (MP.parse (Parser.sourceFile <* MP.eof) "" contents) >>= Syntax.parseDeclarations of
     Left err -> do
-      Text.putStrLn err
-      error "err"
+      error $ "Parse error:\n" <> Text.unpack err
     Right x -> pure x
 
   decls <-
     case TC.run $ TC.tcModule decls of
       Left err -> do
-        Text.putStrLn err
-        error "err"
+        error $ "Type error: " <> Text.unpack err
       Right x -> pure x
+
+  Text.putStrLn ffi
              
   forM_ decls $ \case
     Declare{} ->
       pure ()
     Def{ident,type_,body} -> do
-      Text.putStr $ "(def " <> unIdent ident
+      Text.putStrLn ""
+      Text.putStr $ "// (def " <> unIdent ident
       forM_ type_ $ \ty ->
         Text.putStr $ " : " <> ppSExpr (serializeType ty)
       Text.putStrLn ""
-      Text.putStrLn $ "  " <> ppSExpr (serializeExpr body) <> ")"
+      Text.putStrLn $ "//  " <> ppSExpr (serializeExpr body) <> ")"
 
-      Text.putStrLn $ "var " <> unIdent ident <> " = " <> JS.renderExpr (ToJS.toJS body) <> ";"
+      Text.putStrLn $ "var " <> ToJS.mangle ident <> " = " <> JS.renderExpr (ToJS.toJS body) <> ";"

@@ -65,6 +65,9 @@ spec = do
     it "string" $
       parseS "\"Hello\"" `shouldParse` String "Hello"
 
+    it "string, and then something else" $
+      parseS "(\"a\" 1)" `shouldParse` List [String "a", Num 1]
+
     it "string with escapes" $
       parseS "\"Hello\\\"world\"" `shouldParse` String "Hello\"world"
 

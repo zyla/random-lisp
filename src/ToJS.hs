@@ -15,6 +15,9 @@ toJS = \case
   Syntax.Lit (Syntax.IntLiteral x) ->
     JS.Num x
 
+  Syntax.Lit (Syntax.StringLiteral x) ->
+    JS.String x
+
   Syntax.Var id ->
    JS.Var (mangle id)
 

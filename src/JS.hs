@@ -24,6 +24,9 @@ renderExpr = \case
   Num x ->
     T.pack (show x)
 
+  String x ->
+    T.pack (show x)
+
   ArrayLit xs ->
     "[" <> T.intercalate "," (map renderExpr xs) <> "]"
 
@@ -32,5 +35,3 @@ renderExpr = \case
 
   If cond then_ else_ ->
     "(" <> renderExpr cond <> ")?(" <> renderExpr then_ <> "):(" <> renderExpr else_ <> ")"
-
-  x -> error $ "renderExpr: " <> show x

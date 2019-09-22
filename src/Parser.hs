@@ -37,7 +37,7 @@ integer = lexeme L.decimal
 
 -- Taken from https://hackage.haskell.org/package/megaparsec-6.5.0/docs/Text-Megaparsec-Char-Lexer.html#v:charLiteral
 stringLiteral :: Parser Text
-stringLiteral = char '"' *> (Text.pack <$> (manyTill L.charLiteral (char '"')))
+stringLiteral = lexeme $ char '"' *> (Text.pack <$> (manyTill L.charLiteral (char '"')))
 
 sExpr :: Parser SExpr
 sExpr = optional sc *> sExpr'

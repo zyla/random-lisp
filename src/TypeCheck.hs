@@ -70,9 +70,6 @@ infer ctx = \case
     argsActual <- traverse (infer ctx) args
     case fnty of
       TyFun argtys retty -> do
---        when (argtys /= argtysInferred) $
---          err $ "Argument type mismatch in application: " <> tshow argtys <> " vs " <> tshow argtysInferred
-
         when (length argtys /= length argsActual) $
           err $ "Argument type mismatch in application: " <> tshow argtys <> " vs " <> tshow argsActual
 
@@ -81,23 +78,32 @@ infer ctx = \case
             unifyD tvSet (stripDynamic actualType) (stripDynamic expectedType) arg
 
         let modifyCtx = foldr (\(modifyCtx, _, _) acc -> modifyCtx . acc) id arginfos
-        let modifyCtxType = foldr (\(_, modifyCtxTy, _) acc -> modifyCtxTy . acc) id arginfos
+        let shouldDynamicize = any (\(_, d, _) -> d == Dynamicize) arginfos
         let argExprs = map (\(_, _, expr) -> expr) arginfos
+        let dynamicizeIfNeeded appExpr resultTy =
+              if shouldDynamicize then
+                case stripDynamic resultTy of
+                  (Dynamic, ty) ->
+                    (appExpr, ty)
+                  (Static, ty) ->
+                    (App (Var (Ident "dynamic/pure")) [appExpr], TyApp (TyVar (Ident "Dynamic")) [ty])
+              else
+                (appExpr, resultTy)
 
-        pure (modifyCtx $ App fn argExprs, modifyCtxType (subst sub retty))
+        pure $ first modifyCtx $ dynamicizeIfNeeded (App fn argExprs) (subst sub retty)
       _ ->
         err $ "Application to a non-function type " <> tshow fnty
 
   Fun args body -> do
     (body, bodyty) <- infer (foldr (\(k, v) -> Map.insert k v) ctx args) body
-    pure (body, TyFun (map snd args) bodyty)
+    pure (Fun args body, TyFun (map snd args) bodyty)
 
 stripForall :: Type -> ([Ident], Type)
 stripForall = \case
   TyForall tvs ty -> (tvs, ty)
   ty -> ([], ty)
 
-data Dynamicity = Dynamic | Static
+data Dynamicity = Dynamic | Static deriving (Eq, Show)
 
 stripDynamic :: Type -> (Dynamicity, Type)
 stripDynamic = \case
@@ -145,26 +151,26 @@ subst sub = \case
           -- subst [(a, Maybe b)] (forall b. a -> b)
     in TyForall ids (subst sub' ty)
 
-unifyD :: Unknowns -> (Dynamicity, Type) -> (Dynamicity, Type) -> Expr -> TC (Expr -> Expr, Type -> Type, Expr)
+data Dynamicize = Dynamicize | NoDynamicize deriving (Eq, Show)
+
+unifyD :: Unknowns -> (Dynamicity, Type) -> (Dynamicity, Type) -> Expr -> TC (Expr -> Expr, Dynamicize, Expr)
 unifyD u (Dynamic, ty1) (Dynamic, ty2) arg = do
   unify u ty1 ty2
-  pure (id, id, arg)
+  pure (id, NoDynamicize, arg)
 unifyD u (Static, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
-  pure (id, id, arg)
+  pure (id, NoDynamicize, arg)
 unifyD u (Dynamic, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
   sub <- gets substitution
   nm <- generateName ""
   pure 
     ( \ctx -> App (Var (Ident "dynamic/bind")) [arg, Fun [(nm, subst sub ty2)] ctx]
-    , dynamicize
+    , Dynamicize
     , Var nm )
 unifyD u (Static, ty1) (Dynamic, ty2) arg = do
   unify u ty1 ty2
-  pure (id, id, App (Var (Ident "dynamic/pure")) [arg])
-
-dynamicize ty = TyApp (TyVar (Ident "Dynamic")) [snd (stripDynamic ty)]
+  pure (id, NoDynamicize, App (Var (Ident "dynamic/pure")) [arg])
 
 unify :: Unknowns -> Type -> Type -> TC ()
 unify u t1 t2 = do
