@@ -1,3 +1,5 @@
+(declare print : (forall [a] (-> [a] Unit)))
+
 (declare dynamic/pure : (forall [a] (-> [a] (Dynamic a))))
 
 (declare dynamic/bind :
@@ -28,6 +30,8 @@
 (def s+s (+ s s))
 (def d+d (+ d d))
 (def d+s (+ d s))
-(def s+d (+ s d))
 
-; (def ex1 (dynamic/pure d))
+(def ex1 (dynamic/pure d))
+
+(def main
+  (dynamic/subscribe (+ d d) (fn [(x Int)] (print x))))
