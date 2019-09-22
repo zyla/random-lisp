@@ -26,7 +26,9 @@ const ref$slashnew = (value) => {
 
 const ref$slashread = (ref) => ref;
 
-const ref$slashwrite = (ref, value) => ref._write(value);
+const ref$slashwrite = (ref, value) => ref._write(value._read());
+
+const dynamic$slashread = (dyn) => dyn._read();
 
 const dynamic$slashpure = (value) => ({
   _read: () => value,
@@ -72,7 +74,42 @@ const dynamic$slashbind = (outer, cont) => {
 
 const dynamic$slashsubscribe = (dyn, l) => dyn._addListener(l);
 const $plus = (a, b) => a + b;
+const $minus = (a, b) => a - b;
 const print = (x) => console.log(x);
 const concat = (a, b) => a + b;
 
 const int$minus$gtstring = (value) => "" + value;
+
+// DOM stuff
+
+var currentParent;
+
+// (declare el : (-> [String (Array Prop) (-> [] Unit)] Unit))
+const el = (tag, props, body) => {
+  const parent = currentParent;
+  const e = document.createElement(tag);
+  for(var p of props) { p(e); }
+  parent.appendChild(e);
+  currentParent = e;
+  body();
+  currentParent = parent;
+};
+
+// (declare text : (-> [(Dynamic String)] Unit))
+const text = (dyn) => {
+  const node = document.createTextNode(dyn._read());
+  currentParent.appendChild(node);
+  dyn._addListener((value) => { node.textContent = value });
+};
+
+// (declare render-in-body : (-> [(-> [] Unit)] Unit))
+const render$minusin$minusbody = (widget) => {
+  currentParent = document.body;
+  widget();
+};
+
+// (declare no-props : (Array Prop))
+const no$minusprops = [];
+
+// (declare on-click : (-> [(-> [] Unit)] Prop))
+const on$minusclick = (handler) => (el) => el.addEventListener('click', handler);

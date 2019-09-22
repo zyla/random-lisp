@@ -64,6 +64,19 @@ infer ctx = \case
   expr@(Lit (StringLiteral _)) ->
     pure (expr, TyVar (Ident "String"))
 
+  expr@(Lit (ArrayLiteral exprs)) -> do
+    exprsTyped <- traverse (infer ctx) exprs
+    let tys = map snd exprsTyped
+    case tys of
+      (ty:_) -> do
+        when (any (/= ty) tys) $
+          err $ "Element type mismatch in array, expected " <> ppType ty <> "; " <> tshow tys
+
+        pure (Lit $ ArrayLiteral $ fst <$> exprsTyped, TyApp (TyVar (Ident "Array")) [ty])
+
+      [] ->
+        err "Can't yet type an empty array :("
+
   App fn args -> do
     (fn, (tvs, fnty)) <- second stripForall <$> infer ctx fn
     let tvSet = Set.fromList tvs

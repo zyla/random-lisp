@@ -38,6 +38,9 @@ toJS = \case
       ((\(ident, expr) -> JS.VariableDefinition (mangle ident) (toJS expr)) <$> binders) <>
       toJSBlock (toBlock expr)
 
+  Syntax.Lit (Syntax.ArrayLiteral exprs) ->
+    JS.ArrayLit $ toJS <$> exprs
+
   e ->
     terror $ "ToJS: unhandled: " <> Syntax.ppExpr e
 

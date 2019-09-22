@@ -2,7 +2,8 @@
 
 cd $(dirname $0)/..
 
-stack build
+# stack build
 stack exec -- random-lisp > example/output.js
 uglifyjs -c -m --mangle-props --toplevel < example/output.js > example/output.min.js
+uglifyjs -b < example/output.js > example/output.beautiful.js
 wc -c example/output.min.js

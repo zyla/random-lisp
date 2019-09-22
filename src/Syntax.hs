@@ -64,7 +64,7 @@ data Expr
   | Let [(Ident, Expr)] Expr
   deriving (Eq, Show)
 
-data Literal = IntLiteral Integer | StringLiteral Text
+data Literal = IntLiteral Integer | StringLiteral Text | ArrayLiteral [Expr]
   deriving (Eq, Show)
 
 parseIdent :: S.SExpr -> Parser Ident
@@ -80,8 +80,8 @@ parseExpr :: S.SExpr -> Parser Expr
 parseExpr = \case
   S.Symbol ident ->
     pure $ Var (Ident ident)
-  S.List [S.Symbol "fn", args, ret] ->
-    Fun <$> parseParameterList args <*> parseExpr ret
+  S.List (S.Symbol "fn" : args : ret) ->
+    Fun <$> parseParameterList args <*> (makeBlock <$> traverse parseExpr ret)
   S.List (S.Symbol "do" : exprs) ->
     makeBlock <$> traverse parseExpr exprs
   S.List (S.Symbol "let" : S.Vector binders : exprs) ->
@@ -94,6 +94,8 @@ parseExpr = \case
     pure $ Lit (IntLiteral x)
   S.String x ->
     pure $ Lit (StringLiteral x)
+  S.Vector xs ->
+    Lit . ArrayLiteral <$> traverse parseExpr xs
   s ->
     parseError $ "invalid expr: " <> S.ppSExpr s
 
@@ -123,6 +125,8 @@ serializeExpr = \case
     S.Num x
   Lit (StringLiteral x) ->
     S.String x
+  Lit (ArrayLiteral xs) ->
+    S.Vector $ serializeExpr <$> xs
   expr ->
     terror $ "serializeExpr: unhandled " <> tshow expr
 

@@ -42,8 +42,10 @@ main = do
   Text.putStrLn ffi
              
   forM_ decls $ \case
-    Declare{} ->
-      pure ()
+    Declare{ident,declareType=ty} -> do
+      Text.putStrLn ""
+      Text.putStrLn $ "// (declare " <> unIdent ident <> " : " <> ppSExpr (serializeType ty) <> ")"
+      Text.putStrLn $ "// const " <> ToJS.mangle ident <> " = undefined;"
     Def{ident,type_,body} -> do
       Text.putStrLn ""
       Text.putStr $ "// (def " <> unIdent ident

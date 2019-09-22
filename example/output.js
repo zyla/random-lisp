@@ -26,7 +26,9 @@ const ref$slashnew = (value) => {
 
 const ref$slashread = (ref) => ref;
 
-const ref$slashwrite = (ref, value) => ref._write(value);
+const ref$slashwrite = (ref, value) => ref._write(value._read());
+
+const dynamic$slashread = (dyn) => dyn._read();
 
 const dynamic$slashpure = (value) => ({
   _read: () => value,
@@ -57,6 +59,7 @@ const dynamic$slashbind = (outer, cont) => {
   const init = () => {
     outer._addListener(onOuterChange); // FIXME: this listener leaks
     inner = cont(outer._read());
+    inner._addListener(onInnerChange);
     value = inner._read();
   }
 
@@ -71,16 +74,109 @@ const dynamic$slashbind = (outer, cont) => {
 
 const dynamic$slashsubscribe = (dyn, l) => dyn._addListener(l);
 const $plus = (a, b) => a + b;
+const $minus = (a, b) => a - b;
 const print = (x) => console.log(x);
 const concat = (a, b) => a + b;
 
 const int$minus$gtstring = (value) => "" + value;
 
+// DOM stuff
+
+var currentParent;
+
+// (declare el : (-> [String (Array Prop) (-> [] Unit)] Unit))
+const el = (tag, props, body) => {
+  const parent = currentParent;
+  const e = document.createElement(tag);
+  for(var p of props) { p(e); }
+  parent.appendChild(e);
+  currentParent = e;
+  body();
+  currentParent = parent;
+};
+
+// (declare text : (-> [(Dynamic String)] Unit))
+const text = (dyn) => {
+  const node = document.createTextNode(dyn._read());
+  currentParent.appendChild(node);
+  dyn._addListener((value) => { node.textContent = value });
+};
+
+// (declare render-in-body : (-> [(-> [] Unit)] Unit))
+const render$minusin$minusbody = (widget) => {
+  currentParent = document.body;
+  widget();
+};
+
+// (declare no-props : (Array Prop))
+const no$minusprops = [];
+
+// (declare on-click : (-> [(-> [] Unit)] Prop))
+const on$minusclick = (handler) => (el) => el.addEventListener('click', handler);
+
+
+// (declare print : (forall [a] (-> [a] Unit)))
+// const print = undefined;
+
+// (declare concat : (-> [String String] String))
+// const concat = undefined;
+
+// (declare int->string : (-> [Int] String))
+// const int$minus$gtstring = undefined;
+
+// (declare dynamic/pure : (forall [a] (-> [a] (Dynamic a))))
+// const dynamic$slashpure = undefined;
+
+// (declare dynamic/bind : (forall [a b] (-> [(Dynamic a) (-> [a] (Dynamic b))] (Dynamic b))))
+// const dynamic$slashbind = undefined;
+
+// (declare dynamic/subscribe : (forall [a] (-> [(Dynamic a) (-> [a] Unit)] Unit)))
+// const dynamic$slashsubscribe = undefined;
+
+// (declare dynamic/read : (forall [a] (-> [(Dynamic a)] a)))
+// const dynamic$slashread = undefined;
+
+// (declare ref/new : (forall [a] (-> [a] (Dynamic a))))
+// const ref$slashnew = undefined;
+
+// (declare ref/write : (forall [a] (-> [(Dynamic a) (Dynamic a)] Unit)))
+// const ref$slashwrite = undefined;
 
 // (def debug-subscribe : (-> [String (Dynamic Int)] Unit)
 //  (fn ((name String) (dyn (Dynamic Int))) (dynamic/subscribe dyn (fn ((x Int)) (print (concat (concat name ": ") (int->string x)))))))
 var debug$minussubscribe = ((name,dyn) => dynamic$slashsubscribe(dyn,((x) => print(concat(concat(name,": "),int$minus$gtstring(x))))));
 
-// (def _ : Unit
-//  (let [(x (ref/new 1)) (y (ref/new 10))] (do (debug-subscribe "x" x) (debug-subscribe "y" y) (debug-subscribe "(+ x 100)" (dynamic/bind x (fn ((_$0 Int)) (dynamic/pure (+ _$0 100))))) (debug-subscribe "(+ (+ x 200) 100)" (dynamic/bind (dynamic/bind x (fn ((_$1 Int)) (dynamic/pure (+ _$1 200)))) (fn ((_$2 Int)) (dynamic/pure (+ _$2 100))))) (do (ref/write x 2) (ref/write x 5)))))
-var _ = ((()=>{var x = ref$slashnew(1);var y = ref$slashnew(10);debug$minussubscribe("x",x);debug$minussubscribe("y",y);debug$minussubscribe("(+ x 100)",dynamic$slashbind(x,((_$$0) => dynamic$slashpure($plus(_$$0,100)))));debug$minussubscribe("(+ (+ x 200) 100)",dynamic$slashbind(dynamic$slashbind(x,((_$$1) => dynamic$slashpure($plus(_$$1,200)))),((_$$2) => dynamic$slashpure($plus(_$$2,100)))));return ((()=>{ref$slashwrite(x,2);return ref$slashwrite(x,5);})());})());
+// (declare + : (-> [Int Int] Int))
+// const $plus = undefined;
+
+// (declare - : (-> [Int Int] Int))
+// const $minus = undefined;
+
+// (declare el : (-> [String (Array Prop) (-> [] Unit)] Unit))
+// const el = undefined;
+
+// (declare text : (-> [(Dynamic String)] Unit))
+// const text = undefined;
+
+// (declare on-click : (-> [(-> [] Unit)] Prop))
+// const on$minusclick = undefined;
+
+// (declare render-in-body : (-> [(-> [] Unit)] Unit))
+// const render$minusin$minusbody = undefined;
+
+// (declare false : Boolean)
+// const false = undefined;
+
+// (declare true : Boolean)
+// const true = undefined;
+
+// (declare no-props : (Array Prop))
+// const no$minusprops = undefined;
+
+// (def order-example : Unit
+//  (let [(order-id (ref/new 1755)) (restaurant-name (ref/new "Venezia")) (customer-name (ref/new "Jan Kowalski")) (customer-phone (ref/new "123")) (confirmed (ref/new false)) (details-row (fn ((label String) (body (-> [] Unit))) (el "tr" no-props (fn () (do (el "th" no-props (fn () (text (dynamic/pure label)))) (el "td" no-props body))))))] (render-in-body (fn () (do (el "table" no-props (fn () (do (details-row "Order id" (fn () (text (dynamic/bind order-id (fn ((_$0 Int)) (dynamic/pure (int->string _$0))))))) (details-row "Restaurant" (fn () (text restaurant-name))) (details-row "Customer" (fn () (text (dynamic/bind (dynamic/bind customer-name (fn ((_$1 String)) (dynamic/pure (concat _$1 ", ")))) (fn ((_$2 String)) (dynamic/bind customer-phone (fn ((_$3 String)) (dynamic/pure (concat _$2 _$3))))))))) (details-row "Status" (fn () (text (dynamic/pure "Confirmed"))))))) (el "div" no-props (fn () (el "button" [(on-click (fn () (ref/write customer-name (dynamic/pure "Krzysztof Jarzyna"))))] (fn () (text (dynamic/pure "Change name")))))) (el "div" no-props (fn () (el "button" [(on-click (fn () (ref/write customer-phone (dynamic/bind customer-phone (fn ((_$4 String)) (dynamic/pure (concat _$4 "7")))))))] (fn () (text (dynamic/pure "Change phone")))))) (el "div" no-props (fn () (el "button" [(on-click (fn () (ref/write restaurant-name (dynamic/pure "Peppers"))))] (fn () (text (dynamic/pure "Change restaurant")))))))))))
+var order$minusexample = ((()=>{var order$minusid = ref$slashnew(1755);var restaurant$minusname = ref$slashnew("Venezia");var customer$minusname = ref$slashnew("Jan Kowalski");var customer$minusphone = ref$slashnew("123");var confirmed = ref$slashnew(false);var details$minusrow = ((label,body) => el("tr",no$minusprops,(() => ((()=>{el("th",no$minusprops,(() => text(dynamic$slashpure(label))));return el("td",no$minusprops,body);})()))));return render$minusin$minusbody((() => ((()=>{el("table",no$minusprops,(() => ((()=>{details$minusrow("Order id",(() => text(dynamic$slashbind(order$minusid,((_$$0) => dynamic$slashpure(int$minus$gtstring(_$$0)))))));details$minusrow("Restaurant",(() => text(restaurant$minusname)));details$minusrow("Customer",(() => text(dynamic$slashbind(dynamic$slashbind(customer$minusname,((_$$1) => dynamic$slashpure(concat(_$$1,", ")))),((_$$2) => dynamic$slashbind(customer$minusphone,((_$$3) => dynamic$slashpure(concat(_$$2,_$$3)))))))));return details$minusrow("Status",(() => text(dynamic$slashpure("Confirmed"))));})())));el("div",no$minusprops,(() => el("button",[on$minusclick((() => ref$slashwrite(customer$minusname,dynamic$slashpure("Krzysztof Jarzyna"))))],(() => text(dynamic$slashpure("Change name"))))));el("div",no$minusprops,(() => el("button",[on$minusclick((() => ref$slashwrite(customer$minusphone,dynamic$slashbind(customer$minusphone,((_$$4) => dynamic$slashpure(concat(_$$4,"7")))))))],(() => text(dynamic$slashpure("Change phone"))))));return el("div",no$minusprops,(() => el("button",[on$minusclick((() => ref$slashwrite(restaurant$minusname,dynamic$slashpure("Peppers"))))],(() => text(dynamic$slashpure("Change restaurant"))))));})())));})());
+
+// (def counter-example : Unit
+//  (let [(count (ref/new 0))] (render-in-body (fn () (do (el "h2" no-props (fn () (text (dynamic/pure "Counter")))) (el "div" no-props (fn () (text (dynamic/bind count (fn ((_$5 Int)) (dynamic/pure (int->string _$5))))))) (el "div" no-props (fn () (el "button" [(on-click (fn () (ref/write count (dynamic/bind count (fn ((_$6 Int)) (dynamic/pure (+ _$6 1)))))))] (fn () (text (dynamic/pure "Increment")))))) (el "div" no-props (fn () (el "button" [(on-click (fn () (ref/write count (dynamic/bind count (fn ((_$7 Int)) (dynamic/pure (- _$7 1)))))))] (fn () (text (dynamic/pure "Decrement")))))))))))
+var counter$minusexample = ((()=>{var count = ref$slashnew(0);return render$minusin$minusbody((() => ((()=>{el("h2",no$minusprops,(() => text(dynamic$slashpure("Counter"))));el("div",no$minusprops,(() => text(dynamic$slashbind(count,((_$$5) => dynamic$slashpure(int$minus$gtstring(_$$5)))))));el("div",no$minusprops,(() => el("button",[on$minusclick((() => ref$slashwrite(count,dynamic$slashbind(count,((_$$6) => dynamic$slashpure($plus(_$$6,1)))))))],(() => text(dynamic$slashpure("Increment"))))));return el("div",no$minusprops,(() => el("button",[on$minusclick((() => ref$slashwrite(count,dynamic$slashbind(count,((_$$7) => dynamic$slashpure($minus(_$$7,1)))))))],(() => text(dynamic$slashpure("Decrement"))))));})())));})());
