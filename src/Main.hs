@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Main where
 
@@ -17,6 +18,7 @@ import qualified Data.Text as Text
 
 import qualified Parser
 import Syntax
+import SExpr (ppSExpr)
 import qualified JS
 import qualified ToJS
 import qualified TypeCheck as TC
@@ -37,5 +39,12 @@ main = do
         error "err"
       Right x -> pure x
              
-  forM_ decls $ \decl -> do
-    pPrint decl
+  forM_ decls $ \case
+    Declare{} ->
+      pure ()
+    Def{ident,type_,body} -> do
+      Text.putStr $ "(def " <> unIdent ident
+      forM_ type_ $ \ty ->
+        Text.putStr $ " : " <> ppSExpr (serializeType ty)
+      Text.putStrLn ""
+      Text.putStrLn $ "  " <> ppSExpr (serializeExpr body) <> ")"

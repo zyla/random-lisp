@@ -1,7 +1,4 @@
 (declare dynamic/pure : (forall [a] (-> [a] (Dynamic a))))
-(declare dynamic/lift2 :
-  (forall [a b c]
-    (-> [(-> [a b] c) (Dynamic a) (Dynamic b)] (Dynamic c))))
 
 (declare dynamic/bind :
   (forall [a b]
@@ -9,6 +6,10 @@
 
 (declare + : (-> [Int Int] Int))
 
-(defn main []
-  (+ (dynamic/pure 1) 2)
-)
+(def d (dynamic/pure 1))
+(def s 1)
+
+(def s+s (+ s s))
+(def d+d (+ d d))
+(def d+s (+ d s))
+(def s+d (+ s d))

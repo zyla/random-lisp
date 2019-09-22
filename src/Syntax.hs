@@ -10,6 +10,7 @@ import CustomPrelude
 
 import qualified Data.Text as T
 import qualified SExpr as S
+import Data.Bifunctor
 
 newtype Ident = Ident { unIdent :: Text }
   deriving newtype (Eq, Show, Ord)
@@ -43,6 +44,17 @@ parseType = \case
   s ->
     parseError $ "invalid type: " <> tshow s
 
+serializeType :: Type -> S.SExpr
+serializeType = \case
+  TyVar (Ident i) ->
+    S.Symbol i
+  TyFun args ret ->
+    S.List [S.Symbol "->", S.Vector (serializeType <$> args), serializeType ret]
+  TyForall tvs ret ->
+    S.List [S.Symbol "forall", S.Vector (serializeIdent <$> tvs), serializeType ret]
+  TyApp tc args ->
+    S.List (serializeType tc : (serializeType <$> args))
+
 data Expr
   = Var Ident
   | App Expr [Expr]
@@ -60,6 +72,8 @@ parseIdent = \case
   s ->
     parseError $ "Invalid ident: " <> tshow s
 
+serializeIdent (Ident i) = S.Symbol i
+
 parseExpr :: S.SExpr -> Parser Expr
 parseExpr = \case
   S.Symbol ident ->
@@ -74,6 +88,19 @@ parseExpr = \case
     pure $ Lit (StringLiteral x)
   s ->
     parseError $ "invalid expr: " <> tshow s
+
+serializeExpr :: Expr -> S.SExpr
+serializeExpr = \case
+  Var (Ident ident) ->
+    S.Symbol ident
+  Fun args ret ->
+    S.List [S.Symbol "fn", S.List ((\(ident, ty) -> S.List [serializeIdent ident, serializeType ty]) <$> args), serializeExpr ret]
+  App fn args ->
+    S.List (serializeExpr fn : (serializeExpr <$> args))
+  Lit (IntLiteral x) ->
+    S.Num x
+  Lit (StringLiteral x) ->
+    S.String x
 
 parseParameterList = \case
   S.Vector args -> traverse parseParam args
