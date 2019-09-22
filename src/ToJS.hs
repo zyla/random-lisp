@@ -42,6 +42,7 @@ mangle' = T.concatMap $
     '*' -> "$mul"
     '+' -> "$plus"
     '-' -> "$minus"
+    '_' -> "_"
     '=' -> "$eq"
     ',' -> "$comma"
     '.' -> "$dot"

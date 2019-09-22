@@ -48,3 +48,5 @@ main = do
         Text.putStr $ " : " <> ppSExpr (serializeType ty)
       Text.putStrLn ""
       Text.putStrLn $ "  " <> ppSExpr (serializeExpr body) <> ")"
+
+      Text.putStrLn $ "var " <> unIdent ident <> " = " <> JS.renderExpr (ToJS.toJS body) <> ";"
