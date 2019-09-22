@@ -1,0 +1,11 @@
+What is needed for a DOM example:
+
+- [ ] `let` expression
+- [x] `do` expression
+- [ ] array literals (for props)
+
+For a more complete one:
+- [ ] records
+
+Do not obsess over efficiency of the generated code. In particular, using
+`bind` is fine for now.
