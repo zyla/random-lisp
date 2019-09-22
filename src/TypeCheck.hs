@@ -133,6 +133,7 @@ unify u t1 t2 = do
 
   go (TyVar v) ty | v `Set.member` u = solve v ty
   go ty (TyVar v) | v `Set.member` u = solve v ty
+  go (TyVar v1) (TyVar v2) | v1 == v2 = pure ()
   go (TyVar v) _ = unifyError
 
   go (TyApp f1 args1) (TyApp f2 args2) = do
