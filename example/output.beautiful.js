@@ -153,6 +153,8 @@ const if$ = (cond, then, else_) => cond ? then : else_;
 
 var debug$minussubscribe = (name, dyn) => dynamic$slashsubscribe(dyn, x => print(concat(concat(name, ": "), int$minus$gtstring(x))));
 
+var text$minusinput = (props, ref) => el("input", array$slashconcat(props, [ on$minusinput(value => ref$slashwrite(ref, dynamic$slashpure(value))), attr("value", ref) ]), () => (() => {})());
+
 var order$minusexample = (() => {
     var order$minusid = ref$slashnew(1755);
     var restaurant$minusname = ref$slashnew("Venezia");
@@ -163,7 +165,6 @@ var order$minusexample = (() => {
         el("th", no$minusprops, () => text(dynamic$slashpure(label)));
         return el("td", no$minusprops, body);
     })());
-    var text$minusinput = (props, ref) => el("input", array$slashconcat(props, [ on$minusinput(value => ref$slashwrite(ref, dynamic$slashpure(value))), attr("value", ref) ]), () => (() => {})());
     return render$minusin$minusbody(() => (() => {
         el("table", no$minusprops, () => (() => {
             details$minusrow("Order id", () => text(dynamic$slashbind(order$minusid, _$$0 => dynamic$slashpure(int$minus$gtstring(_$$0)))));

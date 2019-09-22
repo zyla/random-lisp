@@ -48,6 +48,13 @@
 ; Hack, as we can't yet type an empty array
 (declare no-props : (Array Prop))
 
+(defn text-input [(props (Array Prop)) (ref (Dynamic String))]
+  (el "input"
+      (array/concat props
+        [(on-input (fn [(value String)] (ref/write ref value)))
+         (attr "value" ref)])
+    (fn [] (do))))
+
 (def order-example
   (let [
     (order-id (ref/new 1755))
@@ -62,13 +69,6 @@
           (el "th" no-props (fn [] (text label)))
           (el "td" no-props body)
         ))))
-
-    (text-input (fn [(props (Array Prop)) (ref (Dynamic String))]
-      (el "input"
-          (array/concat props
-            [(on-input (fn [(value String)] (ref/write ref value)))
-             (attr "value" ref)])
-        (fn [] (do)))))
   ]
 
   (render-in-body (fn []
@@ -76,8 +76,7 @@
       (details-row "Order id" (fn [] (text (int->string order-id))))
       (details-row "Restaurant" (fn [] (text restaurant-name)))
       (details-row "Customer" (fn [] (text (concat (concat customer-name ", ") customer-phone))))
-      (details-row "Status" (fn []
-        (text (if confirmed "Confirmed" "Waiting"))))
+      (details-row "Status" (fn [] (text (if confirmed "Confirmed" "Waiting"))))
     ))
     (el "div" no-props (fn []
       (el "label" no-props (fn [] (text "Customer name: ")))
