@@ -57,6 +57,7 @@ const dynamic$slashbind = (outer, cont) => {
   const init = () => {
     outer._addListener(onOuterChange); // FIXME: this listener leaks
     inner = cont(outer._read());
+    inner._addListener(onInnerChange);
     value = inner._read();
   }
 
