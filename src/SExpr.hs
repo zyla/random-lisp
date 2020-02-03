@@ -8,7 +8,14 @@ import CustomPrelude
 
 import qualified Data.Text as Text
 
-data SExpr = Symbol Text | String Text | Num Integer | List [SExpr] | Vector [SExpr] | Map [SExpr] deriving (Eq, Show)
+data SExpr
+  = Symbol Text        -- foo
+  | String Text        -- "foo"
+  | Num Integer        -- 7
+  | List [SExpr]       -- (a b c)
+  | Vector [SExpr]     -- [a b c]
+  | Map [SExpr]        -- {a b c}
+  deriving (Eq, Show)
 
 ppSExpr :: SExpr -> Text
 ppSExpr = \case

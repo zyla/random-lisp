@@ -74,9 +74,11 @@ infer ctx = \case
 
         pure (Lit $ ArrayLiteral $ fst <$> exprsTyped, TyApp (TyVar (Ident "Array")) [ty])
 
-      [] ->
+      [] -> -- (forall [a] (Array a))
         err "Can't yet type an empty array :("
 
+  -- (f a b c)
+  -- (forall [a b c] t) -> [a b c], t
   App fn args -> do
     (fn, (tvs, fnty)) <- second stripForall <$> infer ctx fn
     let tvSet = Set.fromList tvs
@@ -193,6 +195,8 @@ unifyD u (Dynamic, ty1) (Dynamic, ty2) arg = do
 unifyD u (Static, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
   pure (id, NoDynamicize, arg)
+
+-- (int->string (dynamic/pure 1)) -> (dynamic/bind (dynamic/pure 1) (fn [$1] (dynamic/pure (int->string $1))))
 unifyD u (Dynamic, ty1) (Static, ty2) arg = do
   unify u ty1 ty2
   sub <- gets substitution
@@ -201,6 +205,8 @@ unifyD u (Dynamic, ty1) (Static, ty2) arg = do
     ( \ctx -> App (Var (Ident "dynamic/bind")) [arg, Fun [(nm, subst sub ty2)] ctx]
     , Dynamicize
     , Var nm )
+
+-- (dynamic/subscribe 1 ...)  ->  (dynamic/subscribe (dynamic/pure 1) ...)
 unifyD u (Static, ty1) (Dynamic, ty2) arg = do
   unify u ty1 ty2
   pure (id, NoDynamicize, App (Var (Ident "dynamic/pure")) [arg])
@@ -241,3 +247,15 @@ unify u t1 t2 = do
   go (TyFun _ _) _ = unifyError
 
   go (TyForall _ _) _ = err "Unifying foralls not yet supported"
+
+f :: IO ()
+f = do
+  x <- getLine
+  case x of
+    "" -> foo
+    _ -> bar
+
+f =
+  case "fo" <> !getLine of
+    "" -> foo
+    _ -> bar

@@ -72,7 +72,10 @@ const dynamic$slashbind = (outer, cont) => {
   };
 }
 
-const dynamic$slashsubscribe = (dyn, l) => dyn._addListener(l);
+const dynamic$slashsubscribe = (dyn, l) => {
+  l(dyn._read());
+  dyn._addListener(l);
+};
 const $plus = (a, b) => a + b;
 const $minus = (a, b) => a - b;
 const print = (x) => console.log(x);

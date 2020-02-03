@@ -28,7 +28,7 @@ main = do
   ffi <- Text.readFile "example/ffi.js"
   contents <- Text.readFile "example/index.clj"
 
-  decls <- case first (Text.pack . MP.parseErrorPretty) (MP.parse (Parser.sourceFile <* MP.eof) "" contents) >>= Syntax.parseDeclarations of
+  decls <- case first (Text.pack . show) (MP.parse (Parser.sourceFile <* MP.eof) "" contents) >>= Syntax.parseDeclarations of
     Left err -> do
       error $ "Parse error:\n" <> Text.unpack err
     Right x -> pure x

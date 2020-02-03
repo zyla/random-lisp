@@ -1,30 +1,3 @@
-; Unit
-; (Array Int)
-; (-> [(Array a) (Array a)] (Array a))
-; (forall [a b c] (-> (-> [a] b) (-> [b] c) (-> [a] c)))
-
-(declare print : (forall [a] (-> [a] Unit)))
-
-; print :: forall a. a -> Unit
-
-(declare concat : (-> [String String] String))
-(declare array/concat : (forall [a] (-> [(Array a) (Array a)] (Array a))))
-(declare int->string : (-> [Int] String))
-(declare + : (-> [Int Int] Int))
-(declare - : (-> [Int Int] Int))
-(declare if : (forall [a] (-> [Boolean a a] a)))
-(declare false : Boolean)
-(declare true : Boolean)
-(declare not : (-> [Boolean] Boolean))
-
-; (f a b c)
-; x
-; ""
-; 5
-; (fn [(a Int) (b Int)] (+ a b))
-; (do e1 e2 e3)
-; (let [(a e1) (e e2)] ...)
-
 
 
 (declare dynamic/pure : (forall [a] (-> [a] (Dynamic a))))
@@ -52,40 +25,6 @@
 (defn debug-subscribe [(name String) (dyn (Dynamic Int))]
   (dynamic/subscribe dyn (fn [(x Int)] (print (concat (concat name ": ") (int->string x))))))
 
-(defn debug-subscribe-str [(name String) (dyn (Dynamic String))]
-  (dynamic/subscribe dyn (fn [(x String)]
-      (print (concat (concat name ": ") x)))))
-
-(declare ref/write-constant : (forall [a] (-> [(Dynamic a) a] Unit)))
-
-(def main
-  (do
-    (debug-subscribe "pure 5" (dynamic/pure 5))
-    (debug-subscribe "5 >>= (+1)"
-        (dynamic/bind (dynamic/pure 5)
-                      (fn [(x Int)] (dynamic/pure (+ x 1)))))
-
-    (let [
-      (count (ref/new 0))
-      (x (ref/new 0))
-      (y (ref/new 0))
-    ]
-    (debug-subscribe "count" count)
-    (debug-subscribe-str "x, y"
-      (concat (int->string x) (concat ", " (int->string y))))
-    (debug-subscribe-str "x" (int->string x))
-
-    (ref/write x (+ x 1))
-    (ref/write y 5)
-    (ref/write y 10)
-    )
-  ))
-
-(defn test []
-  (let [(x (ref/new 0))]
-    (ref/write-constant x (+ x 1)))
-)
-
 (declare el : (-> [String (Array Prop) (-> [] Unit)] Unit))
 (declare text : (-> [(Dynamic String)] Unit))
 (declare on-click : (-> [(-> [] Unit)] Prop))
@@ -105,7 +44,7 @@
          (attr "value" ref)])
     (fn [] (do))))
 
-(def order-example (fn []
+(def order-example
   (let [
     (order-id (ref/new 1755))
     (restaurant-name (ref/new "Venezia"))
@@ -148,9 +87,9 @@
            (attr-if (not confirmed) "disabled" "disabled") ]
         (fn [] (text "Unconfirm")))))
   )))
-))
+)
 
-(def counter-example (fn []
+(def counter-example
   (let [
     (count (ref/new 0))
   ]
@@ -165,7 +104,4 @@
       (el "button" [(on-click (fn [] (ref/write count (- count 1))))]
         (fn [] (text "Decrement")))))
   ))
-)))
-
-(def main
-  (order-example))
+))
